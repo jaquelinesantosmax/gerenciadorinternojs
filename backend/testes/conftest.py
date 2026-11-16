@@ -40,7 +40,30 @@ from gerenciador.banco import nova_sessao, obter_engine  # noqa: E402
 from gerenciador.papeis import cadastrar_adm_instalacao  # noqa: E402
 from gerenciador.principal import criar_app  # noqa: E402
 
-TABELAS = ["eventos_auditoria", "sessoes", "concessoes_papel", "dominios_autorizados", "usuarios"]
+TABELAS = [
+    "eventos_auditoria", "sessoes", "concessoes_papel", "dominios_autorizados", "usuarios", "times", "espacos",
+    "membros_espaco", "paineis", "tipos_item", "status_item", "opcoes_origem", "itens", "co_responsaveis",
+    "apelidos_item", "campos_personalizados", "historico_item", "comentarios", "versoes_comentario", "anexos",
+    "vinculos", "config_plataforma",
+]
+
+# Mesmos dados iniciais das migrações (tipos e status padrão, limite de anexos).
+SEMENTES = [
+    "INSERT INTO dominios_autorizados (dominio, adicionado_em) VALUES "
+    "('jusbrasil.com.br', now()), ('digesto.com.br', now())",
+    "INSERT INTO tipos_item (id, espaco_id, nome, nivel, ordem) VALUES "
+    "(gen_random_uuid(), NULL, 'Épico', 'epico', 10), (gen_random_uuid(), NULL, 'História', 'padrao', 20), "
+    "(gen_random_uuid(), NULL, 'Tarefa', 'padrao', 30), (gen_random_uuid(), NULL, 'Bug', 'padrao', 40), "
+    "(gen_random_uuid(), NULL, 'Subtarefa', 'subtarefa', 90)",
+    "INSERT INTO status_item (id, espaco_id, nome, categoria, ordem) VALUES "
+    "(gen_random_uuid(), NULL, 'Backlog', 'a_fazer', 10), (gen_random_uuid(), NULL, 'A fazer', 'a_fazer', 20), "
+    "(gen_random_uuid(), NULL, 'Em andamento', 'em_andamento', 30), "
+    "(gen_random_uuid(), NULL, 'Em validação', 'em_andamento', 40), "
+    "(gen_random_uuid(), NULL, 'Aguardando terceiros', 'em_andamento', 50), "
+    "(gen_random_uuid(), NULL, 'Bloqueado', 'em_andamento', 60), "
+    "(gen_random_uuid(), NULL, 'Concluído', 'concluido', 70), (gen_random_uuid(), NULL, 'Cancelado', 'concluido', 80)",
+    "INSERT INTO config_plataforma (chave, valor) VALUES ('limite_anexo_mb', '1024'::jsonb)",
+]
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -59,12 +82,8 @@ def esquema():
 def limpar():
     with obter_engine().begin() as conexao:
         conexao.execute(text(f"TRUNCATE {', '.join(TABELAS)} RESTART IDENTITY CASCADE"))
-        conexao.execute(
-            text(
-                "INSERT INTO dominios_autorizados (dominio, adicionado_em) VALUES "
-                "('jusbrasil.com.br', now()), ('digesto.com.br', now())"
-            )
-        )
+        for sql in SEMENTES:
+            conexao.execute(text(sql))
     yield
 
 

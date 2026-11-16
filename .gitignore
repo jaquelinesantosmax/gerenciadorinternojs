@@ -23,6 +23,7 @@ next-env.d.ts
 # Dados locais (banco, anexos, logs)
 infra/dados/
 infra/logs/
+infra/anexos/
 anexos/
 
 # Sistema e editores

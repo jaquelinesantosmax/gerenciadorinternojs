@@ -104,3 +104,10 @@ class EventoAuditoria(Base):
 
     ator: Mapped[Usuario | None] = relationship(foreign_keys=[ator_id], lazy="joined")
     alvo: Mapped[Usuario | None] = relationship(foreign_keys=[alvo_usuario_id], lazy="joined")
+
+
+# Tabelas das etapas seguintes (importadas aqui para todas ficarem registradas juntas).
+from . import (
+    modelos_espacos,  # noqa: E402, F401
+    modelos_itens,  # noqa: E402, F401
+)

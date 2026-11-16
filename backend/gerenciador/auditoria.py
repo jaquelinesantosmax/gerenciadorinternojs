@@ -22,6 +22,16 @@ class TipoEvento(str, enum.Enum):
     USUARIO_REATIVADO = "usuario_reativado"
     DOMINIO_ADICIONADO = "dominio_adicionado"
     DOMINIO_REMOVIDO = "dominio_removido"
+    ESPACO_CRIADO = "espaco_criado"
+    MEMBRO_ADICIONADO = "membro_adicionado"
+    MEMBRO_PAPEL_ALTERADO = "membro_papel_alterado"
+    MEMBRO_REMOVIDO = "membro_removido"
+    ITEM_EXCLUIDO = "item_excluido"
+    CONCLUSAO_COM_BLOQUEIO = "conclusao_com_bloqueio"
+    ANEXO_EXCLUIDO = "anexo_excluido"
+    COMENTARIO_EXCLUIDO = "comentario_excluido"
+    TIME_CRIADO = "time_criado"
+    LIMITE_ANEXOS_ALTERADO = "limite_anexos_alterado"
 
 
 def registrar(

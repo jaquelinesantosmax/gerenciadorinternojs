@@ -1,7 +1,10 @@
 """Configuração lida de variáveis de ambiente com o prefixo GERENCIADOR_."""
 
+import secrets
 from functools import lru_cache
+from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,6 +18,11 @@ class Config(BaseSettings):
     # Em produção (HTTPS) o cookie precisa ser marcado como seguro.
     cookie_seguro: bool = False
     sessao_dias: int = 15
+    # Onde os anexos ficam guardados no computador (armazenamento local, trocável no futuro).
+    pasta_anexos: str = str(Path(__file__).resolve().parents[2] / "infra" / "anexos")
+    # Chave para assinar os links temporários de download. Sem ela, uma nova é sorteada a cada vez que o
+    # servidor liga (os links antigos deixam de valer, o que é aceitável porque eles duram minutos).
+    segredo: str = Field(default_factory=lambda: secrets.token_hex(32))
 
     def validar(self) -> None:
         if self.login_teste_habilitado and self.ambiente != "desenvolvimento":

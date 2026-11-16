@@ -68,6 +68,8 @@ def test_matriz_da_plataforma():
         "ver_usuarios": True,
         "criar_espaco_equipe": True,
         "acessar_espaco_gestao": True,
+        "gerenciar_times_provisorios": False,
+        "definir_limite_anexos": False,
     }
     assert [k for k, v in criar.items() if v] == ["criar_espaco_equipe"]
     assert not any(comum.values())

@@ -28,6 +28,9 @@ PERMISSOES: dict[str, frozenset[Papel]] = {
     "ver_usuarios": frozenset({ADM, GESTOR}),
     "criar_espaco_equipe": frozenset({ADM, GESTOR, CRIAR}),
     "acessar_espaco_gestao": frozenset({ADM, GESTOR}),
+    # Lista provisória de Times (decisão de 16/11), até o cadastro de Times da Etapa 4.
+    "gerenciar_times_provisorios": frozenset({ADM}),
+    "definir_limite_anexos": frozenset({ADM}),
 }
 
 _PERMISSAO_PARA_PAPEL = {
