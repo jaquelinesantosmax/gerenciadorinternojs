@@ -1,0 +1,313 @@
+/* Design System Jusbrasil, com a identidade da prévia v3: faixa lateral escura, ficha e linha do tempo. */
+
+:root {
+  --verde: #007a5f;
+  --verde-escuro: #004d3b;
+  --verde-faixa: #0f6e56;
+  --verde-claro: #bfe0d5;
+  --verde-fundo: #e1f5ee;
+  --cta: #63b424;
+  --cta-escuro: #528f1e;
+  --fundo: #f1f4f8;
+  --texto: #101729;
+  --texto-2: #383f49;
+  --borda: #d5dce4;
+  --branco: #ffffff;
+  --alerta: #a32d2d;
+  --alerta-fundo: #fcebeb;
+  --alerta-texto: #791f1f;
+  --aviso: #ef9f27;
+  --aviso-fundo: #fff8ec;
+  --cinza-ponto: #d3d1c7;
+
+  --raio-card: 8px;
+  --raio-painel: 12px;
+  --raio-etiqueta: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: var(--fonte-inter), Inter, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--verde);
+}
+
+:focus-visible {
+  outline: 2px solid var(--cta);
+  outline-offset: 2px;
+}
+
+/* Tipografia */
+.h1 {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--verde);
+  margin: 0;
+  line-height: 1.25;
+}
+.h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--verde);
+  margin: 0;
+}
+.h3 {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--verde);
+  margin: 0;
+}
+.legenda {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--texto-2);
+}
+
+/* Botões */
+.botao {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0.5px solid var(--verde);
+  background: var(--branco);
+  color: var(--verde);
+  border-radius: var(--raio-card);
+  padding: 7px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.botao:hover {
+  background: var(--verde-fundo);
+}
+.botao:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.botao-acao {
+  background: var(--cta);
+  border-color: var(--cta);
+  color: var(--branco);
+}
+.botao-acao:hover {
+  background: var(--cta-escuro);
+  border-color: var(--cta-escuro);
+}
+.botao-perigo {
+  border-color: var(--alerta);
+  color: var(--alerta);
+}
+.botao-perigo:hover {
+  background: var(--alerta-fundo);
+}
+.botao-perigo-cheio {
+  background: var(--alerta);
+  border-color: var(--alerta);
+  color: var(--branco);
+}
+.botao-perigo-cheio:hover {
+  background: var(--alerta-texto);
+}
+.botao-discreto {
+  border-color: transparent;
+  background: none;
+  color: var(--texto-2);
+}
+
+/* Campos */
+.campo {
+  display: block;
+  width: 100%;
+  height: 36px;
+  border: 0.5px solid var(--borda);
+  border-radius: var(--raio-card);
+  padding: 0 10px;
+  background: var(--branco);
+  font-size: 14px;
+}
+.campo:focus {
+  border-color: var(--verde);
+}
+.rotulo {
+  display: block;
+  font-size: 12px;
+  color: var(--texto-2);
+  margin-bottom: 4px;
+}
+
+/* Etiquetas */
+.etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--raio-etiqueta);
+  padding: 2px 9px;
+  font-size: 12px;
+  background: var(--verde-fundo);
+  color: var(--verde-escuro);
+  white-space: nowrap;
+}
+.etiqueta-alerta {
+  background: var(--alerta-fundo);
+  color: var(--alerta-texto);
+}
+.etiqueta-neutra {
+  background: var(--fundo);
+  color: var(--texto-2);
+}
+.etiqueta-teste {
+  background: var(--aviso-fundo);
+  color: #633806;
+  border: 0.5px solid #fac775;
+}
+
+/* Painéis */
+.painel {
+  background: var(--branco);
+  border: 0.5px solid var(--borda);
+  border-radius: var(--raio-painel);
+  padding: 16px 18px;
+}
+
+.mensagem-erro {
+  color: var(--alerta);
+  font-size: 13px;
+}
+.caixa-alerta {
+  border: 0.5px solid var(--alerta);
+  background: var(--alerta-fundo);
+  color: var(--alerta-texto);
+  border-radius: var(--raio-card);
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+/* Avatar */
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--verde);
+  color: var(--branco);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.avatar-claro {
+  background: var(--branco);
+  color: var(--verde-escuro);
+}
+
+/* Linha do tempo (prévia v3) */
+.trilho {
+  position: relative;
+  padding-left: 22px;
+}
+.trilho::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  background: var(--borda);
+}
+.evento {
+  position: relative;
+  padding: 7px 0;
+}
+.evento .ponto {
+  position: absolute;
+  left: -19px;
+  top: 14px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cinza-ponto);
+}
+.evento.destaque .ponto {
+  left: -21px;
+  top: 12px;
+  width: 11px;
+  height: 11px;
+  background: var(--branco);
+  border: 2px solid var(--alerta);
+}
+.evento.papel .ponto {
+  left: -21px;
+  top: 12px;
+  width: 11px;
+  height: 11px;
+  background: var(--verde);
+}
+
+/* Tabela */
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.tabela th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--texto-2);
+  font-size: 12px;
+  padding: 8px 10px;
+  border-bottom: 0.5px solid var(--borda);
+}
+.tabela td {
+  padding: 10px;
+  border-bottom: 0.5px solid var(--borda);
+  vertical-align: middle;
+}
+.tabela tr.clicavel {
+  cursor: pointer;
+}
+.tabela tr.clicavel:hover td {
+  background: var(--fundo);
+}
+.tabela tr:last-child td {
+  border-bottom: none;
+}
+
+.oculto-acessivel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

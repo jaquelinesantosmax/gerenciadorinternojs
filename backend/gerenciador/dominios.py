@@ -2,13 +2,13 @@
 
 import re
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from . import relogio
 from .auditoria import TipoEvento, registrar
 from .erros import NaoEncontrado, OperacaoNegada
-from .modelos import DominioAutorizado, Usuario
+from .modelos import DominioAutorizado, Sessao, Usuario
 from .papeis import exigir
 
 DOMINIOS_INICIAIS = ("jusbrasil.com.br", "digesto.com.br")
@@ -44,5 +44,15 @@ def remover(db: Session, ator: Usuario, dominio: str, ip: str | None) -> None:
     if ator.email.endswith("@" + dominio):
         raise OperacaoNegada("Você não pode remover o domínio do seu próprio e-mail.")
     db.delete(existente)
-    registrar(db, TipoEvento.DOMINIO_REMOVIDO, ator_id=ator.id, ip=ip, dominio=dominio)
+    # Quem é do domínio removido sai na hora, como na desativação.
+    encerradas = db.execute(
+        update(Sessao)
+        .where(
+            Sessao.encerrada_em.is_(None),
+            Sessao.usuario_id.in_(select(Usuario.id).where(Usuario.email.endswith("@" + dominio))),
+        )
+        .values(encerrada_em=relogio.agora(), motivo_encerramento="dominio_removido")
+    ).rowcount or 0
+    registrar(db, TipoEvento.DOMINIO_REMOVIDO, ator_id=ator.id, ip=ip, dominio=dominio,
+              sessoes_encerradas=encerradas)
     db.commit()

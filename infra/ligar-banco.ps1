@@ -1,4 +1,4 @@
-# Liga só o banco de dados (usado pelos testes automáticos).
+﻿# Liga só o banco de dados (usado pelos testes automáticos).
 . (Join-Path $PSScriptRoot 'comum.ps1')
 $cfg = Obter-Config
 Iniciar-Banco $cfg

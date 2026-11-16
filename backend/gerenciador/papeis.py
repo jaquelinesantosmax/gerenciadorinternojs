@@ -4,7 +4,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from . import relogio
@@ -38,6 +38,8 @@ _PERMISSAO_PARA_PAPEL = {
 
 NOMES = {ADM: "ADM da plataforma", GESTOR: "Gestor", CRIAR: "Criar espaços"}
 
+_TRAVA_ADMS = 7_100_001  # identificador fixo da trava usada em contar_adms_ativos
+
 
 def papeis_ativos(db: Session, usuario_id: uuid.UUID) -> set[Papel]:
     linhas = db.scalars(
@@ -62,6 +64,9 @@ def exigir(db: Session, usuario: Usuario, permissao: str) -> None:
 
 
 def contar_adms_ativos(db: Session) -> int:
+    """Conta os ADMs ativos. Trava a contagem até o fim da transação, para dois ADMs que se tiram
+    ao mesmo tempo não deixarem a plataforma sem nenhum."""
+    db.execute(text("SELECT pg_advisory_xact_lock(:chave)"), {"chave": _TRAVA_ADMS})
     return db.scalar(
         select(func.count())
         .select_from(ConcessaoPapel)

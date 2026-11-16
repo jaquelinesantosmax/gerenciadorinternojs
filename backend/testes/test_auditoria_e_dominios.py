@@ -82,11 +82,19 @@ def test_dominio_invalido_ou_repetido(cliente_adm):
     assert repetido.json()["detail"] == "O domínio digesto.com.br já está autorizado."
 
 
-def test_remover_dominio_bloqueia_novos_logins(novo_cliente, cliente_adm, db):
+def test_remover_dominio_tira_quem_esta_dentro_e_bloqueia_novos_logins(novo_cliente, cliente_adm, db):
+    dentro, outro_dominio = novo_cliente(), novo_cliente()
+    entrar(dentro, "a@digesto.com.br", "A")
+    entrar(outro_dominio, "b@jusbrasil.com.br", "B")
+
     assert cliente_adm.delete("/api/admin/dominios/digesto.com.br").status_code == 204
+
+    assert dentro.get("/api/eu").status_code == 401
+    assert outro_dominio.get("/api/eu").status_code == 200
     resposta = novo_cliente().post("/api/auth/teste/entrar", json={"email": "a@digesto.com.br", "nome": "A"})
     assert resposta.status_code == 403
-    assert len(eventos(db, "dominio_removido")) == 1
+    [evento] = eventos(db, "dominio_removido")
+    assert evento.detalhes == {"dominio": "digesto.com.br", "sessoes_encerradas": 1}
 
 
 def test_nao_remove_o_dominio_do_proprio_email_nem_o_ultimo(cliente_adm):

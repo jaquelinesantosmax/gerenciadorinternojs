@@ -1,4 +1,4 @@
-# Funções usadas por ligar.ps1, desligar.ps1 e pelos testes.
+﻿# Funções usadas por ligar.ps1, desligar.ps1 e pelos testes.
 # Tudo roda sem permissão de administrador: o banco é ligado como um programa comum, não como serviço.
 
 $ErrorActionPreference = 'Stop'
