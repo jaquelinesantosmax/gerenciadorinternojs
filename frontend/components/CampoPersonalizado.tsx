@@ -57,7 +57,7 @@ export function EntradaCampo({
           <span className="rotulo">{campo.nome}</span>
           <label style={{ display: "inline-flex", gap: 6, alignItems: "center", height: 36 }}>
             <input id={id} type="checkbox" checked={valor === true} onChange={(e) => aoMudar(e.target.checked)} />
-            Sim
+            {campo.config.texto || "Sim"}
           </label>
         </div>
       );

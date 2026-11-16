@@ -141,3 +141,11 @@ def test_times_provisorios_so_adm_da_plataforma_mantem(novo_cliente, cliente_adm
 def test_busca_de_pessoas(novo_cliente, cliente_adm):
     entrar(novo_cliente(), "bruno.reis@jusbrasil.com.br", "Bruno Reis")
     assert [p["nome"] for p in cliente_adm.get("/api/pessoas", params={"busca": "brun"}).json()] == ["Bruno Reis"]
+
+
+def test_meus_espacos_trazem_os_paineis_para_o_menu_em_cascata(cliente_adm):
+    criar_projeto(cliente_adm)
+    cliente_adm.post("/api/espacos/LOP/paineis", json={"nome": "Suporte B2B"})
+    cliente_adm.post("/api/espacos/LOP/paineis", json={"nome": "Legal Ops"})
+    [espaco] = cliente_adm.get("/api/espacos").json()
+    assert [p["nome"] for p in espaco["paineis"]] == ["Legal Ops", "Suporte B2B"]

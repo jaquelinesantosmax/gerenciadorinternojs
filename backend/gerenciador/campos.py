@@ -83,6 +83,12 @@ def _config(tipo: str, crua: dict[str, Any], anterior: dict[str, Any] | None = N
         return {"moeda": moeda}
     if tipo == "pessoa":
         return {"varias": bool(crua.get("varias", anterior.get("varias", False)))}
+    if tipo == "sim_nao":
+        # Texto livre que aparece ao lado da caixa de marcar (decisão de 16/11), ex.: "Envolve outra área?".
+        texto = str(crua.get("texto", anterior.get("texto", "")) or "").strip()
+        if len(texto) > 200:
+            raise OperacaoNegada("O texto da caixa pode ter até 200 caracteres.")
+        return {"texto": texto}
     return {}
 
 

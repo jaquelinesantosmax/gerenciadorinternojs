@@ -107,6 +107,7 @@ export interface EspacoResumo {
   tipo: "projeto" | "pessoal";
   modelo: string | null;
   meu_papel: string;
+  paineis: Ref[];
 }
 export interface EspacoDetalhe extends EspacoResumo {
   descricao: string | null;
@@ -147,7 +148,7 @@ export interface Campo {
   tipo: TipoCampo;
   obrigatorio: boolean;
   tipos_item: string[];
-  config: { opcoes?: OpcaoCampo[]; moeda?: string; varias?: boolean };
+  config: { opcoes?: OpcaoCampo[]; moeda?: string; varias?: boolean; texto?: string };
   ativo: boolean;
 }
 export interface ItemLinha {

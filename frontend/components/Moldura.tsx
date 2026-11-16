@@ -95,11 +95,23 @@ export function Moldura({ children }: { children: React.ReactNode }) {
             (lista as EspacoResumo[]).length > 0 ? (
               <div key={titulo as string}>
                 <div className="secao">{titulo as string}</div>
-                {(lista as EspacoResumo[]).map((e) => (
-                  <Link key={e.id} href={`/espacos/${e.sigla}`} className={`item${ativo(`/espacos/${e.sigla}`) ? " ativo" : ""}`} title={e.nome}>
-                    {icone as React.ReactNode} <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.nome}</span>
-                  </Link>
-                ))}
+                {(lista as EspacoResumo[]).map((e) => {
+                  const base = `/espacos/${e.sigla}`;
+                  const noPainel = caminho.startsWith(`${base}/paineis/`);
+                  return (
+                    <div key={e.id}>
+                      <Link href={base} className={`item${caminho.startsWith(base) && !noPainel ? " ativo" : ""}`} title={e.nome}>
+                        {icone as React.ReactNode} <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.nome}</span>
+                      </Link>
+                      {/* Painéis em cascata abaixo do nome do espaço (decisão de 16/11). */}
+                      {e.paineis.map((p) => (
+                        <Link key={p.id} href={`${base}/paineis/${p.id}`} className={`item item-painel${caminho === `${base}/paineis/${p.id}` ? " ativo" : ""}`} title={p.nome}>
+                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.nome}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  );
+                })}
               </div>
             ) : null,
           )}
@@ -141,6 +153,9 @@ export function Moldura({ children }: { children: React.ReactNode }) {
         .faixa .item:hover{background:var(--verde-faixa)}
         .faixa .item.ativo{background:var(--verde)}
         .faixa .item-discreto{color:var(--verde-claro);margin-top:6px}
+        .faixa .item-painel{position:relative;padding-left:32px;font-size:12.5px;color:var(--verde-claro)}
+        .faixa .item-painel::before{content:"";position:absolute;left:15px;top:0;bottom:50%;width:9px;border-left:0.5px solid var(--verde-claro);border-bottom:0.5px solid var(--verde-claro);border-bottom-left-radius:4px;opacity:.6}
+        .faixa .item-painel.ativo{color:#fff}
         .faixa{overflow-y:auto}
         .faixa .rodape{margin-top:auto;border-top:0.5px solid var(--verde-faixa);padding-top:12px}
         .conteudo{padding:24px 28px;min-width:0;max-width:1180px}

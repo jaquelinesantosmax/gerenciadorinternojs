@@ -243,3 +243,16 @@ def test_espaco_pessoal_so_o_dono_e_responsavel(cliente_adm, novo_cliente, cenar
     assert cliente_adm.get("/api/itens/DONA-1").status_code == 404
     r = dono.post("/api/espacos/DONA/itens", json={"dados": dados_item(c, responsavel_id=c["membro_id"])})
     assert r.json()["detail"] == "O responsável precisa ser ADM ou Membro do espaço."
+
+
+def test_sim_nao_tem_texto_livre_ao_lado_da_caixa(cenario):
+    c = cenario
+    campo = c["adm"].post("/api/espacos/LOP/campos", json={
+        "nome": "Cross Service", "tipo": "sim_nao", "tipos_item": [c["tipos"]["Tarefa"]],
+        "config": {"texto": "  Envolve outra área?  "}}).json()
+    assert campo["config"] == {"texto": "Envolve outra área?"}
+    editado = c["adm"].patch(f"/api/espacos/LOP/campos/{campo['id']}", json={"config": {"texto": "Precisa de outra área?"}})
+    assert editado.json()["config"] == {"texto": "Precisa de outra área?"}
+    longo = c["adm"].post("/api/espacos/LOP/campos", json={
+        "nome": "X", "tipo": "sim_nao", "tipos_item": [c["tipos"]["Tarefa"]], "config": {"texto": "a" * 201}})
+    assert longo.json()["detail"] == "O texto da caixa pode ter até 200 caracteres."

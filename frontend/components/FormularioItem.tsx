@@ -16,7 +16,9 @@ export function FormularioItem({
   inicial,
   aoSalvar,
   aoCancelar,
+  painelInicial,
 }: {
+  painelInicial?: string;
   espaco: EspacoDetalhe;
   opcoes: OpcoesItem;
   inicial?: ItemDetalhe | null;
@@ -57,7 +59,7 @@ export function FormularioItem({
           time_id: "",
           data_inicio: hoje(),
           data_entrega: "",
-          painel_id: espaco.paineis.length === 1 ? espaco.paineis[0].id : "",
+          painel_id: painelInicial ?? (espaco.paineis.length === 1 ? espaco.paineis[0].id : ""),
           categorias: [],
           co_responsaveis: [],
           valores: {},

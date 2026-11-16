@@ -3,7 +3,7 @@ import { descreverMudanca } from "@/app/(logado)/itens/[chave]/Atividade";
 import { tamanhoLegivel } from "@/app/(logado)/itens/[chave]/Anexos";
 import type { Campo, DocTexto } from "@/lib/api";
 import { sugerirSigla } from "@/lib/formato";
-import { textoDoCampo } from "./CampoPersonalizado";
+import { EntradaCampo, textoDoCampo } from "./CampoPersonalizado";
 import { paraEditar, paraSalvar } from "./Editor";
 import { TextoRico } from "./TextoRico";
 
@@ -76,6 +76,14 @@ describe("campos personalizados", () => {
     expect(textoDoCampo({ ...base, tipo: "sim_nao", config: {} }, false, [])).toBe("Não");
     expect(textoDoCampo({ ...base, tipo: "data", config: {} }, "2026-12-01", [])).toBe("01/12/2026");
     expect(textoDoCampo({ ...base, tipo: "texto_curto", config: {} }, null, [])).toBeNull();
+  });
+});
+
+describe("campo Sim/Não", () => {
+  it("mostra o texto livre definido pelo ADM ao lado da caixa", () => {
+    const campo: Campo = { id: "c", nome: "Cross Service", tipo: "sim_nao", obrigatorio: false, tipos_item: [], ativo: true, config: { texto: "Envolve outra área?" } };
+    render(<EntradaCampo campo={campo} valor={true} aoMudar={() => undefined} membros={[]} moedas={{}} />);
+    expect(screen.getByRole("checkbox", { name: "Envolve outra área?" })).toBeChecked();
   });
 });
 

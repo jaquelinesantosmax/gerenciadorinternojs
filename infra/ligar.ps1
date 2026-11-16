@@ -38,7 +38,7 @@ if (-not (Respondendo $urlBackend)) {
     Escrever-Passo 'Ligando o servidor'
     $p = Start-Process -PassThru -WindowStyle Hidden -WorkingDirectory (Join-Path $Raiz 'backend') `
         -FilePath $Python -ArgumentList @('-m', 'uvicorn', 'gerenciador.principal:criar_app', '--factory',
-            '--host', '127.0.0.1', '--port', $cfg.BACKEND_PORTA, '--reload') `
+            '--host', '127.0.0.1', '--port', $cfg.BACKEND_PORTA) `
         -RedirectStandardOutput (Join-Path $Logs 'servidor.log') -RedirectStandardError (Join-Path $Logs 'servidor-erros.log')
     $processos['servidor'] = $p.Id
 }

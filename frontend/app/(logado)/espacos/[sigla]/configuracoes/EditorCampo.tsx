@@ -81,6 +81,7 @@ export function EditorCampo({
   const [opcoes, setOpcoes] = useState<OpcaoCampo[]>(campo?.config.opcoes ?? []);
   const [moeda, setMoeda] = useState(campo?.config.moeda ?? "BRL");
   const [varias, setVarias] = useState(campo?.config.varias ?? false);
+  const [textoCaixa, setTextoCaixa] = useState(campo?.config.texto ?? "");
   const [erro, setErro] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
 
@@ -91,7 +92,9 @@ export function EditorCampo({
       ? { moeda }
       : tipo === "pessoa"
         ? { varias }
-        : {};
+        : tipo === "sim_nao"
+          ? { texto: textoCaixa }
+          : {};
 
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
@@ -152,6 +155,17 @@ export function EditorCampo({
                 </option>
               ))}
             </select>
+          </div>
+        )}
+        {tipo === "sim_nao" && (
+          <div style={{ gridColumn: "1 / -1" }}>
+            <label className="rotulo" htmlFor="campo-texto">
+              Texto ao lado da caixa
+            </label>
+            <input id="campo-texto" className="campo" maxLength={200} placeholder="Ex.: Envolve outra área?" value={textoCaixa} onChange={(e) => setTextoCaixa(e.target.value)} />
+            <span className="legenda" style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 6 }}>
+              Prévia: <input type="checkbox" disabled aria-hidden="true" /> {textoCaixa || "Sim"}
+            </span>
           </div>
         )}
         {tipo === "pessoa" && (

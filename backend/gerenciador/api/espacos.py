@@ -21,6 +21,11 @@ rotas = APIRouter(prefix="/api")
 
 # --- Formatos ---------------------------------------------------------------------------------
 
+class Opcao(BaseModel):
+    id: uuid.UUID
+    nome: str
+
+
 class EspacoResumo(BaseModel):
     id: uuid.UUID
     sigla: str
@@ -28,11 +33,8 @@ class EspacoResumo(BaseModel):
     tipo: str
     modelo: str | None
     meu_papel: str
-
-
-class Opcao(BaseModel):
-    id: uuid.UUID
-    nome: str
+    # Painéis aparecem em cascata abaixo do nome do espaço no menu (decisão de 16/11).
+    paineis: list[Opcao] = []
 
 
 class TipoSaida(BaseModel):
@@ -107,7 +109,7 @@ def _resumo(e: Espaco, papel: str) -> EspacoResumo:
 def _detalhe(db: Session, usuario: Usuario, e: Espaco) -> EspacoDetalhe:
     papel = svc.papel_no_espaco(db, usuario, e) or ""
     return EspacoDetalhe(
-        **_resumo(e, papel).model_dump(),
+        **_resumo(e, papel).model_dump(exclude={"paineis"}),
         descricao=e.descricao,
         criado_em=e.criado_em,
         permissoes=svc.permissoes_no_espaco(papel or None),
@@ -123,7 +125,12 @@ def _detalhe(db: Session, usuario: Usuario, e: Espaco) -> EspacoDetalhe:
 
 @rotas.get("/espacos", response_model=list[EspacoResumo])
 def meus_espacos(usuario: Usuario = Depends(usuario_atual), db: Session = Depends(obter_db)) -> list[EspacoResumo]:
-    return [_resumo(e, p) for e, p in svc.listar_meus_espacos(db, usuario)]
+    resumos = []
+    for e, p in svc.listar_meus_espacos(db, usuario):
+        resumo = _resumo(e, p)
+        resumo.paineis = [Opcao(id=x.id, nome=x.nome) for x in svc.listar_paineis(db, e)]
+        resumos.append(resumo)
+    return resumos
 
 
 @rotas.post("/espacos", response_model=EspacoDetalhe, status_code=201)

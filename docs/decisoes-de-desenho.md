@@ -119,6 +119,9 @@ Decididos em 16/11, para a Etapa 2
 - Tipos de campo personalizado: texto curto, texto longo, número, moeda (o ADM escolhe a moeda), data, data e hora, URL, lista de escolha única, lista de escolha múltipla, lista em cascata, pessoa e sim/não.
 - Ao criar um campo personalizado, o ADM do espaço escolhe em quais tipos de item ele aparece e se é obrigatório.
 - Tipos de item próprios ficam no nível de História, Tarefa e Bug: podem estar dentro de um Épico e ter Subtarefas.
+- Painéis aparecem no menu em cascata, abaixo do nome do espaço; cada painel abre os itens daquela frente, e um item criado ali já vem com o painel preenchido.
+- O campo Sim/Não é uma caixa de marcar com um texto livre ao lado, definido pelo ADM do espaço (ex.: "Envolve outra área?").
+- As visualizações Lista, Kanban e Gantt dentro de cada espaço e painel entram na Etapa 3.
 
 ## Status e workflow
 
