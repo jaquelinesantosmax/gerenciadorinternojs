@@ -43,6 +43,7 @@ export function FormularioItem({
           data_real_entrega: inicial.data_real_entrega ?? "",
           justificativa_atraso: inicial.justificativa_atraso ?? "",
           estimativa: inicial.estimativa ?? "",
+          estimativa_horas: inicial.estimativa_horas ?? "",
           painel_id: inicial.painel?.id ?? "",
           origem_id: inicial.origem?.id ?? "",
           pai_id: "",
@@ -105,6 +106,7 @@ export function FormularioItem({
       data_real_entrega: d.data_real_entrega || null,
       justificativa_atraso: d.justificativa_atraso || null,
       estimativa: d.estimativa === "" ? null : d.estimativa,
+      estimativa_horas: d.estimativa_horas === "" || d.estimativa_horas === undefined ? null : d.estimativa_horas,
       valores: Object.fromEntries(Object.entries(valores).filter(([cid]) => camposDoTipo.some((c) => c.id === cid))),
     };
     // Se a lista de itens ainda não carregou, o pai atual é mantido (não some sem querer).
@@ -190,6 +192,12 @@ export function FormularioItem({
               Estimativa (story points)
             </label>
             <input id="f-estimativa" type="number" min={0} step="0.5" className="campo" value={String(d.estimativa ?? "")} onChange={(e) => mudar("estimativa", e.target.value)} />
+          </div>
+          <div>
+            <label className="rotulo" htmlFor="f-horas">
+              Estimativa em horas
+            </label>
+            <input id="f-horas" type="number" min={0} step="0.5" className="campo" value={String(d.estimativa_horas ?? "")} onChange={(e) => mudar("estimativa_horas", e.target.value)} />
           </div>
           <div>
             <label className="rotulo" htmlFor="f-real">

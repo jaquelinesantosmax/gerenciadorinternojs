@@ -111,6 +111,7 @@ export default function PaginaItem() {
     ["Categorias", item.categorias.length ? item.categorias.map((c) => <span key={c} className="etiqueta etiqueta-neutra" style={{ marginRight: 4 }}>{c}</span>) : "—"],
     ["Origem da solicitação", item.origem?.nome ?? "—"],
     ["Estimativa", item.estimativa ? `${Number(item.estimativa).toLocaleString("pt-BR")} pontos` : "—"],
+    ["Estimativa em horas", item.estimativa_horas ? `${Number(item.estimativa_horas).toLocaleString("pt-BR")} h` : "—"],
     ["Data real da entrega", data(item.data_real_entrega)],
     ...(item.justificativa_atraso ? ([["Justificativa do atraso", item.justificativa_atraso]] as [string, React.ReactNode][]) : []),
     ...campos.map((c) => [c.nome, textoDoCampo(c, item.valores[c.id], pessoas) ?? "—"] as [string, React.ReactNode]),

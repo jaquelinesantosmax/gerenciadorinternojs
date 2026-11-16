@@ -1,13 +1,15 @@
 "use client";
 
-import { IconLayoutKanban, IconList, IconLock, IconPlus, IconSearch, IconSettings, IconTimeline } from "@tabler/icons-react";
+import { IconChartLine, IconLayoutKanban, IconList, IconLock, IconPlus, IconSearch, IconSettings, IconTimeline } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { EtiquetaPrioridade, EtiquetaStatus } from "@/components/EtiquetaStatus";
 import { FormularioItem } from "@/components/FormularioItem";
 import { Gantt } from "@/components/Gantt";
+import { PlanejamentoScrum } from "@/components/PlanejamentoScrum";
 import { QuadroKanban } from "@/components/QuadroKanban";
+import { Relatorios } from "@/components/Relatorios";
 import { api, ErroApi, type EspacoDetalhe, type ItemLinha, type OpcoesItem, type QuadroResumo } from "@/lib/api";
 import { formatarData } from "@/lib/formato";
 import { MODELOS, NOME_PAPEL_ESPACO } from "@/lib/textos";
@@ -27,16 +29,16 @@ export function VisaoEspaco({ sigla, painelId }: { sigla: string; painelId?: str
   const [quadroId, setQuadroId] = useState<string | null>(null);
   // A aba escolhida fica lembrada neste navegador, por espaço.
   const chaveAba = `gerenciador:aba:${sigla}`;
-  const [aba, setAba] = useState<"lista" | "quadro" | "gantt">("quadro");
+  const [aba, setAba] = useState<"lista" | "quadro" | "gantt" | "relatorios">("quadro");
   useEffect(() => {
     try {
       const salva = localStorage.getItem(chaveAba);
-      if (salva === "lista" || salva === "quadro" || salva === "gantt") setAba(salva);
+      if (salva === "lista" || salva === "quadro" || salva === "gantt" || salva === "relatorios") setAba(salva);
     } catch {
       /* navegador sem armazenamento: fica no padrão */
     }
   }, [chaveAba]);
-  const mudarAba = (valor: "lista" | "quadro" | "gantt") => {
+  const mudarAba = (valor: "lista" | "quadro" | "gantt" | "relatorios") => {
     setAba(valor);
     try {
       localStorage.setItem(chaveAba, valor);
@@ -45,6 +47,7 @@ export function VisaoEspaco({ sigla, painelId }: { sigla: string; painelId?: str
     }
   };
   const quadrosDoEspaco = quadros.filter((q) => q.painel_id === null);
+  const quadroAtual = quadros.find((q) => q.id === quadroId);
   useEffect(() => {
     api
       .quadros(sigla)
@@ -133,13 +136,14 @@ export function VisaoEspaco({ sigla, painelId }: { sigla: string; painelId?: str
             ["lista", "Lista", <IconList key="l" size={15} stroke={1.5} />],
             ["quadro", "Quadro", <IconLayoutKanban key="k" size={15} stroke={1.5} />],
             ["gantt", "Gantt", <IconTimeline key="g" size={15} stroke={1.5} />],
+            ["relatorios", "Relatórios", <IconChartLine key="r" size={15} stroke={1.5} />],
           ] as const
         ).map(([valor, nome, icone]) => (
           <button key={valor} role="tab" aria-selected={aba === valor} className={`aba-visao${aba === valor ? " ativa" : ""}`} onClick={() => mudarAba(valor)}>
             {icone} {nome}
           </button>
         ))}
-        {aba === "quadro" && !painel && quadrosDoEspaco.length > 1 && (
+        {(aba === "quadro" || aba === "relatorios") && !painel && quadrosDoEspaco.length > 1 && (
           <select className="campo" aria-label="Quadro" style={{ width: "auto", height: 30, marginLeft: 8 }} value={quadroId ?? ""} onChange={(e) => setQuadroId(e.target.value)}>
             {quadrosDoEspaco.map((q) => (
               <option key={q.id} value={q.id}>
@@ -152,8 +156,17 @@ export function VisaoEspaco({ sigla, painelId }: { sigla: string; painelId?: str
 
       {aba === "quadro" && (
         <div style={{ marginTop: 12 }}>
-          {quadroId ? <QuadroKanban key={quadroId} quadroId={quadroId} podeMover={espaco.permissoes.editar_itens} /> : <p className="legenda">Carregando quadro…</p>}
+          {!quadroAtual ? (
+            <p className="legenda">Carregando quadro…</p>
+          ) : quadroAtual.tipo === "scrum" ? (
+            <PlanejamentoScrum key={quadroAtual.id} quadroId={quadroAtual.id} podeMover={espaco.permissoes.editar_itens} />
+          ) : (
+            <QuadroKanban key={quadroAtual.id} quadroId={quadroAtual.id} podeMover={espaco.permissoes.editar_itens} />
+          )}
         </div>
+      )}
+      {aba === "relatorios" && (
+        <div style={{ marginTop: 12 }}>{quadroAtual ? <Relatorios key={quadroAtual.id} quadro={quadroAtual} /> : <p className="legenda">Carregando…</p>}</div>
       )}
       {aba === "gantt" && (
         <div style={{ marginTop: 12 }}>

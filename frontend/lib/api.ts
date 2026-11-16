@@ -185,6 +185,7 @@ export interface QuadroResumo {
   tipo: "kanban" | "simples" | "scrum";
   painel_id: string | null;
   usa_backlog: boolean;
+  unidade_estimativa: "pontos" | "horas" | "itens";
 }
 export interface Card {
   chave: string;
@@ -200,6 +201,61 @@ export interface Card {
   atrasado: boolean;
   bloqueado: boolean;
   painel: string | null;
+  estimativa?: string | null;
+  estimativa_horas?: string | null;
+}
+
+// --- Etapa 3b ---
+export interface Sprint {
+  id: string;
+  nome: string;
+  objetivo: string | null;
+  inicio: string | null;
+  fim: string | null;
+  estado: "planejada" | "ativa" | "encerrada";
+  compromisso: string | null;
+  entregue: string | null;
+  total: string;
+  itens: Card[];
+}
+export interface Planejamento {
+  unidade: "pontos" | "horas" | "itens";
+  nome_unidade: string;
+  sprints: Sprint[];
+  backlog: Card[];
+  backlog_total: string;
+  pode_gerenciar: boolean;
+}
+export interface PontoBurndown {
+  dia: string;
+  restante: string | null;
+  ideal: string;
+  escopo: string | null;
+}
+export interface ItemRelatorio {
+  chave: string;
+  resumo: string;
+  valor: string;
+}
+export interface RelatorioSprint {
+  sprint: Sprint;
+  unidade: string;
+  concluidos: ItemRelatorio[];
+  nao_concluidos: ItemRelatorio[];
+  adicionados_depois: ItemRelatorio[];
+  removidos: ItemRelatorio[];
+}
+export interface DiaFluxo {
+  dia: string;
+  a_fazer: number;
+  em_andamento: number;
+  concluido: number;
+}
+export interface TempoDeCiclo {
+  itens: { chave: string; resumo: string; inicio: string; fim: string; dias: number }[];
+  media: number | null;
+  mediana: number | null;
+  p85: number | null;
 }
 export interface Coluna {
   id: string;
@@ -285,6 +341,7 @@ export interface ItemDetalhe {
   data_real_entrega: string | null;
   justificativa_atraso: string | null;
   estimativa: string | null;
+  estimativa_horas: string | null;
   pai: ItemCurto | null;
   filhos: ItemCurto[];
   painel: Ref | null;
@@ -486,7 +543,29 @@ export const api = {
   quadros: (sigla: string) => pedir<QuadroResumo[]>(`/api/espacos/${sigla}/quadros`),
   criarQuadro: (sigla: string, nome: string, tipo: string) =>
     pedir<QuadroResumo>(`/api/espacos/${sigla}/quadros`, { method: "POST", body: json({ nome, tipo }) }),
-  quadro: (id: string) => pedir<QuadroDetalhe>(`/api/quadros/${id}`),
+  quadro: (id: string, sprintId?: string) => pedir<QuadroDetalhe>(`/api/quadros/${id}${sprintId ? `?sprint_id=${sprintId}` : ""}`),
+  // --- Etapa 3b ---
+  planejamento: (quadroId: string) => pedir<Planejamento>(`/api/quadros/${quadroId}/planejamento`),
+  sprints: (quadroId: string) => pedir<Sprint[]>(`/api/quadros/${quadroId}/sprints`),
+  definirUnidade: (quadroId: string, unidade: string) =>
+    pedir<void>(`/api/quadros/${quadroId}/unidade`, { method: "PUT", body: json({ unidade }) }),
+  criarSprint: (quadroId: string, dados: { nome?: string; objetivo?: string; inicio?: string | null; fim?: string | null } = {}) =>
+    pedir<Sprint>(`/api/quadros/${quadroId}/sprints`, { method: "POST", body: json(dados) }),
+  editarSprint: (id: string, dados: { nome?: string; objetivo?: string; inicio?: string | null; fim?: string | null }) =>
+    pedir<Sprint>(`/api/sprints/${id}`, { method: "PATCH", body: json(dados) }),
+  excluirSprint: (id: string) => pedir<void>(`/api/sprints/${id}`, { method: "DELETE" }),
+  adicionarNaSprint: (id: string, chave: string) => pedir<void>(`/api/sprints/${id}/itens`, { method: "POST", body: json({ chave }) }),
+  tirarDaSprint: (id: string, chave: string) => pedir<void>(`/api/sprints/${id}/itens/${chave}`, { method: "DELETE" }),
+  iniciarSprint: (id: string, inicio: string, fim: string) =>
+    pedir<Sprint>(`/api/sprints/${id}/iniciar`, { method: "POST", body: json({ inicio, fim }) }),
+  encerrarSprint: (id: string, destino: string) =>
+    pedir<RelatorioSprint>(`/api/sprints/${id}/encerrar`, { method: "POST", body: json({ destino }) }),
+  burndown: (id: string) => pedir<PontoBurndown[]>(`/api/sprints/${id}/burndown`),
+  relatorioSprint: (id: string) => pedir<RelatorioSprint>(`/api/sprints/${id}/relatorio`),
+  velocidade: (quadroId: string) =>
+    pedir<{ sprint: string; compromisso: string; entregue: string }[]>(`/api/quadros/${quadroId}/velocidade`),
+  fluxoAcumulado: (quadroId: string, dias: number) => pedir<DiaFluxo[]>(`/api/quadros/${quadroId}/fluxo-acumulado?dias=${dias}`),
+  tempoDeCiclo: (quadroId: string, dias: number) => pedir<TempoDeCiclo>(`/api/quadros/${quadroId}/tempo-de-ciclo?dias=${dias}`),
   alterarQuadro: (id: string, dados: { nome?: string; usa_backlog?: boolean }) =>
     pedir<QuadroResumo>(`/api/quadros/${id}`, { method: "PATCH", body: json(dados) }),
   definirColunas: (id: string, colunas: { nome: string; limite: number | null; status_ids: string[] }[]) =>

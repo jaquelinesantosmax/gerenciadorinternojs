@@ -53,6 +53,28 @@ function EditorColunas({ quadro, ligados, aoSalvar }: { quadro: QuadroResumo; li
 
   return (
     <div>
+      {quadro.tipo === "scrum" && (
+        <label style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
+          Estimativa da sprint em
+          <select
+            className="campo"
+            style={{ width: 200 }}
+            defaultValue={quadro.unidade_estimativa}
+            onChange={async (e) => {
+              try {
+                await api.definirUnidade(quadro.id, e.target.value);
+                aoSalvar();
+              } catch (f) {
+                setErro(msg(f, "Não foi possível alterar."));
+              }
+            }}
+          >
+            <option value="pontos">Story points</option>
+            <option value="horas">Horas</option>
+            <option value="itens">Contagem de itens</option>
+          </select>
+        </label>
+      )}
       {quadro.tipo !== "simples" && (
         <label style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 10 }}>
           <input
@@ -203,6 +225,7 @@ export function ConfigQuadros({ sigla, versao }: { sigla: string; versao: number
           <select id="tipo-quadro" className="campo" value={novo.tipo} onChange={(e) => setNovo({ ...novo, tipo: e.target.value })}>
             <option value="kanban">Kanban</option>
             <option value="simples">Simples</option>
+            <option value="scrum">Scrum</option>
           </select>
         </div>
         <button className="botao botao-acao" type="submit" disabled={!novo.nome.trim()} style={{ height: 36 }}>

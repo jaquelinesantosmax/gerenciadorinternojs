@@ -62,7 +62,7 @@ interface Movimento {
 }
 
 /** Quadro Kanban ou simples: colunas por status, backlog separado e limite de itens com alerta. */
-export function QuadroKanban({ quadroId, podeMover }: { quadroId: string; podeMover: boolean }) {
+export function QuadroKanban({ quadroId, podeMover, sprintId }: { quadroId: string; podeMover: boolean; sprintId?: string }) {
   const [quadro, setQuadro] = useState<QuadroDetalhe | null>(null);
   const [arrastando, setArrastando] = useState<Card | null>(null);
   const [sobre, setSobre] = useState<string | null>(null);
@@ -74,11 +74,11 @@ export function QuadroKanban({ quadroId, podeMover }: { quadroId: string; podeMo
 
   const carregar = useCallback(async () => {
     try {
-      setQuadro(await api.quadro(quadroId));
+      setQuadro(await api.quadro(quadroId, sprintId));
     } catch (f) {
       setAviso(f instanceof ErroApi ? f.message : "Não foi possível carregar o quadro.");
     }
-  }, [quadroId]);
+  }, [quadroId, sprintId]);
 
   useEffect(() => {
     setQuadro(null);
