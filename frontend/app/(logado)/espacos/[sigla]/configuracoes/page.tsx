@@ -9,6 +9,7 @@ import { Dialogo } from "@/components/Dialogo";
 import { useEu } from "@/components/Moldura";
 import { api, ErroApi, type Campo, type EspacoDetalhe, type Membro, type OpcoesItem, type Pessoa } from "@/lib/api";
 import { DESCRICAO_PAPEL_ESPACO, NOME_PAPEL_ESPACO } from "@/lib/textos";
+import { Compartilhar, EspacoAberto, GestoresQueAcompanham, PedidosDeAcesso, TimesComAcesso } from "./ConfigAcesso";
 import { ConfigQuadros } from "./ConfigQuadros";
 import { ConfigWorkflow } from "./ConfigWorkflow";
 import { EditorCampo, NOMES_TIPO } from "./EditorCampo";
@@ -348,8 +349,39 @@ export default function ConfiguracoesEspaco() {
       </Secao>
 
       {espaco.tipo === "projeto" && espaco.permissoes.gerenciar_membros && (
-        <Secao titulo="Membros" descricao="Papéis fixos por espaço: a mesma pessoa pode ter papéis diferentes em espaços diferentes. Times, espaço aberto e Solicitar acesso chegam na Etapa 4.">
-          <Membros sigla={sigla} membros={membros} aoMudar={async () => setMembros(await api.membros(sigla))} />
+        <>
+          <Secao titulo="Membros" descricao="Papéis fixos por espaço: a mesma pessoa pode ter papéis diferentes em espaços diferentes.">
+            <Membros sigla={sigla} membros={membros} aoMudar={async () => setMembros(await api.membros(sigla))} />
+          </Secao>
+          <Secao titulo="Times com acesso" descricao="Todo mundo do time ganha o papel escolhido. Quem sai do time perde o acesso que vinha dele.">
+            <TimesComAcesso sigla={sigla} />
+          </Secao>
+        </>
+      )}
+
+      {espaco.tipo === "projeto" && espaco.permissoes.aprovar_acesso && (
+        <Secao titulo="Pedidos de acesso" descricao="Pedidos feitos pelo botão Solicitar acesso. Ao aprovar, escolha o papel da pessoa.">
+          <PedidosDeAcesso sigla={sigla} aoMudar={async () => setMembros(await api.membros(sigla))} />
+        </Secao>
+      )}
+
+      {espaco.tipo === "projeto" && (espaco.permissoes.marcar_aberto || espaco.permissoes.ver_gestores) && (
+        <Secao titulo="Visibilidade">
+          {espaco.permissoes.marcar_aberto && <EspacoAberto sigla={sigla} aberto={espaco.aberto} aoMudar={recarregarEspaco} />}
+          {espaco.permissoes.ver_gestores && (
+            <>
+              <h3 className="h3" style={{ margin: "14px 0 6px" }}>
+                Gestores que acompanham
+              </h3>
+              <GestoresQueAcompanham sigla={sigla} />
+            </>
+          )}
+        </Secao>
+      )}
+
+      {espaco.tipo === "pessoal" && espaco.permissoes.compartilhar && (
+        <Secao titulo="Compartilhar" descricao="As pessoas escolhidas veem os itens deste espaço, sem comentar nem editar. Gestor e ADM da plataforma não veem espaços pessoais.">
+          <Compartilhar sigla={sigla} />
         </Secao>
       )}
 

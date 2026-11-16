@@ -1,7 +1,10 @@
 "use client";
 
 import {
+  IconCompass,
   IconFolder,
+  IconShare,
+  IconUsersGroup,
   IconHistory,
   IconHome,
   IconLogout,
@@ -38,7 +41,7 @@ const ITENS_ADMIN: ItemMenu[] = [
   { href: "/admin/gestores", texto: "Gestores", icone: <IconUserStar size={16} stroke={1.5} />, permissao: "ver_usuarios" },
   { href: "/admin/auditoria", texto: "Auditoria", icone: <IconHistory size={16} stroke={1.5} />, permissao: "ver_auditoria" },
   { href: "/admin/dominios", texto: "Domínios", icone: <IconWorldWww size={16} stroke={1.5} />, permissao: "configurar_dominios" },
-  { href: "/admin/plataforma", texto: "Plataforma", icone: <IconSettings size={16} stroke={1.5} />, permissao: "gerenciar_times_provisorios" },
+  { href: "/admin/plataforma", texto: "Plataforma", icone: <IconSettings size={16} stroke={1.5} />, permissao: "definir_limite_anexos" },
 ];
 
 /** Estrutura das telas logadas: faixa lateral escura com menu e área de conteúdo. */
@@ -90,7 +93,8 @@ export function Moldura({ children }: { children: React.ReactNode }) {
           </Link>
           {[
             ["Espaços", espacos.filter((e) => e.tipo === "projeto"), <IconFolder key="f" size={16} stroke={1.5} />],
-            ["Pessoal", espacos.filter((e) => e.tipo === "pessoal"), <IconUser key="u" size={16} stroke={1.5} />],
+            ["Pessoal", espacos.filter((e) => e.tipo === "pessoal" && e.meu_papel !== "compartilhado"), <IconUser key="u" size={16} stroke={1.5} />],
+            ["Compartilhados comigo", espacos.filter((e) => e.meu_papel === "compartilhado"), <IconShare key="c" size={16} stroke={1.5} />],
           ].map(([titulo, lista, icone]) =>
             (lista as EspacoResumo[]).length > 0 ? (
               <div key={titulo as string}>
@@ -117,6 +121,12 @@ export function Moldura({ children }: { children: React.ReactNode }) {
           )}
           <Link href="/espacos/novo" className={`item item-discreto${ativo("/espacos/novo") ? " ativo" : ""}`}>
             <IconPlus size={16} stroke={1.5} /> Criar espaço
+          </Link>
+          <Link href="/explorar" className={`item item-discreto${ativo("/explorar") ? " ativo" : ""}`}>
+            <IconCompass size={16} stroke={1.5} /> Explorar espaços
+          </Link>
+          <Link href="/times" className={`item item-discreto${ativo("/times") ? " ativo" : ""}`}>
+            <IconUsersGroup size={16} stroke={1.5} /> Times
           </Link>
           {admin.length > 0 && (
             <>

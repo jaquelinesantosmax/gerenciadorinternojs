@@ -37,6 +37,17 @@ export const TIPOS_EVENTO: Record<string, string> = {
   anexo_excluido: "Anexo excluído",
   comentario_excluido: "Comentário excluído",
   time_criado: "Time criado",
+  time_membro_adicionado: "Pessoa entrou no time",
+  time_membro_removido: "Pessoa saiu do time",
+  time_acesso_dado: "Time ganhou acesso ao espaço",
+  time_acesso_alterado: "Papel do time no espaço alterado",
+  time_acesso_retirado: "Time perdeu acesso ao espaço",
+  suporte_iniciado: "Suporte iniciado",
+  suporte_encerrado: "Suporte encerrado",
+  acao_em_suporte: "Ação em suporte",
+  pedido_acesso_recusado: "Pedido de acesso recusado",
+  espaco_aberto: "Espaço aberto para a empresa",
+  espaco_fechado: "Espaço fechado para a empresa",
   limite_anexos_alterado: "Limite de anexos alterado",
 };
 
@@ -48,6 +59,10 @@ export const NOME_PAPEL_ESPACO: Record<string, string> = {
   membro: "Membro",
   leitor: "Leitor",
   dono: "Dono",
+  gestor: "Gestor",
+  suporte: "Suporte (ADM da plataforma)",
+  aberto: "Espaço aberto",
+  compartilhado: "Compartilhado com você",
 };
 
 export const DESCRICAO_PAPEL_ESPACO: Record<string, string> = {
@@ -113,7 +128,7 @@ export function descreverEvento(e: Evento): string {
     case "espaco_criado":
       return `${ator} criou o espaço ${String(d.espaco)}`;
     case "membro_adicionado":
-      return `${ator} adicionou ${alvo} ao espaço ${String(d.espaco)} como ${NOME_PAPEL_ESPACO[String(d.papel)] ?? d.papel}`;
+      return `${ator} ${d.por_pedido ? "aprovou o pedido de acesso e adicionou" : "adicionou"} ${alvo} ao espaço ${String(d.espaco)} como ${NOME_PAPEL_ESPACO[String(d.papel)] ?? d.papel}`;
     case "membro_papel_alterado":
       return `${ator} mudou o papel de ${alvo} em ${String(d.espaco)}: ${NOME_PAPEL_ESPACO[String(d.de)] ?? d.de} → ${NOME_PAPEL_ESPACO[String(d.para)] ?? d.para}`;
     case "membro_removido":
@@ -128,6 +143,28 @@ export function descreverEvento(e: Evento): string {
       return `${ator} excluiu um comentário de ${alvo} em ${String(d.item)}`;
     case "time_criado":
       return `${ator} criou o time ${String(d.time)}`;
+    case "time_membro_adicionado":
+      return `${ator} colocou ${alvo} no time ${String(d.time)}`;
+    case "time_membro_removido":
+      return `${ator} tirou ${alvo} do time ${String(d.time)}`;
+    case "time_acesso_dado":
+      return `${ator} deu ao time ${String(d.time)} acesso ao espaço ${String(d.espaco)} como ${NOME_PAPEL_ESPACO[String(d.papel)] ?? d.papel}`;
+    case "time_acesso_alterado":
+      return `${ator} mudou o papel do time ${String(d.time)} em ${String(d.espaco)}: ${NOME_PAPEL_ESPACO[String(d.de)] ?? d.de} → ${NOME_PAPEL_ESPACO[String(d.para)] ?? d.para}`;
+    case "time_acesso_retirado":
+      return `${ator} tirou o acesso do time ${String(d.time)} ao espaço ${String(d.espaco)}`;
+    case "suporte_iniciado":
+      return `${ator} entrou para suporte no espaço ${String(d.espaco)}. Motivo: ${String(d.motivo ?? "")}`;
+    case "suporte_encerrado":
+      return `${ator} saiu do suporte no espaço ${String(d.espaco)}`;
+    case "acao_em_suporte":
+      return `${ator} fez uma alteração com suporte ativo em ${((d.espacos_em_suporte as string[] | undefined) ?? []).join(", ")} (${String(d.metodo)} ${String(d.caminho)})`;
+    case "pedido_acesso_recusado":
+      return `${ator} recusou o pedido de acesso de ${alvo} ao espaço ${String(d.espaco)}`;
+    case "espaco_aberto":
+      return `${ator} abriu o espaço ${String(d.espaco)} para toda a empresa`;
+    case "espaco_fechado":
+      return `${ator} fechou o espaço ${String(d.espaco)} para quem não é membro`;
     case "limite_anexos_alterado":
       return `${ator} mudou o limite de anexos de ${String(d.de)} MB para ${String(d.para)} MB`;
     default:
@@ -137,5 +174,5 @@ export function descreverEvento(e: Evento): string {
 
 /** Eventos que pedem atenção aparecem com destaque na linha do tempo. */
 export function eventoDeAlerta(tipo: string): boolean {
-  return ["login_falha", "usuario_desativado", "conclusao_com_bloqueio", "item_excluido"].includes(tipo);
+  return ["login_falha", "usuario_desativado", "conclusao_com_bloqueio", "item_excluido", "suporte_iniciado", "acao_em_suporte"].includes(tipo);
 }

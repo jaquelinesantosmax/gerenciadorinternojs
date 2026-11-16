@@ -10,6 +10,7 @@ import { Gantt } from "@/components/Gantt";
 import { PlanejamentoScrum } from "@/components/PlanejamentoScrum";
 import { QuadroKanban } from "@/components/QuadroKanban";
 import { Relatorios } from "@/components/Relatorios";
+import { AcessoNoTopo } from "./AcessoEspaco";
 import { api, ErroApi, type EspacoDetalhe, type ItemLinha, type OpcoesItem, type QuadroResumo } from "@/lib/api";
 import { formatarData } from "@/lib/formato";
 import { MODELOS, NOME_PAPEL_ESPACO } from "@/lib/textos";
@@ -101,8 +102,11 @@ export function VisaoEspaco({ sigla, painelId }: { sigla: string; painelId?: str
     </div>
   );
 
+  const recarregarEspaco = () => void api.espaco(sigla).then(setEspaco).catch(() => router.replace("/"));
+
   return (
     <>
+      <AcessoNoTopo espaco={espaco} parte="faixas" aoMudar={recarregarEspaco} />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
         <div>
           {painel && (
@@ -116,7 +120,8 @@ export function VisaoEspaco({ sigla, painelId }: { sigla: string; painelId?: str
             {NOME_PAPEL_ESPACO[espaco.meu_papel]}
           </p>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <AcessoNoTopo espaco={espaco} parte="botoes" aoMudar={recarregarEspaco} />
           {(espaco.permissoes.configurar || espaco.permissoes.gerenciar_membros) && (
             <Link className="botao" href={`/espacos/${espaco.sigla}/configuracoes`}>
               <IconSettings size={16} stroke={1.5} /> Configurações

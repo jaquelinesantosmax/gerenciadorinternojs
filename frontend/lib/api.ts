@@ -13,7 +13,7 @@ export type Permissao =
   | "ver_usuarios"
   | "criar_espaco_equipe"
   | "acessar_espaco_gestao"
-  | "gerenciar_times_provisorios"
+  | "criar_time"
   | "definir_limite_anexos"
   | "gerenciar_status_padrao";
 
@@ -85,7 +85,12 @@ export type PermissaoEspaco =
   | "editar_qualquer_comentario"
   | "configurar"
   | "gerenciar_membros"
-  | "criar_paineis";
+  | "criar_paineis"
+  | "aprovar_acesso"
+  | "marcar_aberto"
+  | "ver_gestores"
+  | "gerenciar_sprints"
+  | "compartilhar";
 
 export interface Ref {
   id: string;
@@ -118,6 +123,12 @@ export interface EspacoDetalhe extends EspacoResumo {
   tipos: TipoRef[];
   status: StatusRef[];
   origens: Ref[];
+  // Etapa 4
+  aberto: boolean;
+  acompanha: boolean;
+  suporte_ate: string | null;
+  pode_acompanhar: boolean;
+  pedido_pendente: boolean;
 }
 export interface Membro {
   usuario: Pessoa;
@@ -320,6 +331,7 @@ export interface Vinculo {
   status: string | null;
   status_categoria: string | null;
   bloqueio_aberto: boolean;
+  pedido_pendente: boolean;
 }
 export interface ItemDetalhe {
   id: string;
@@ -380,6 +392,41 @@ export interface EventoAtividade {
   campo?: string | null;
   valor_anterior?: string | null;
   valor_novo?: string | null;
+}
+
+// --- Etapa 4 ---
+export interface TimeDetalhe {
+  id: string;
+  nome: string;
+  ativo: boolean;
+  criado_por: Pessoa | null;
+  membros: Pessoa[];
+  pode_editar: boolean;
+}
+export interface AcessoTime {
+  time_id: string;
+  nome: string;
+  papel: "adm" | "membro" | "leitor";
+  membros: number;
+}
+export interface PedidoAcesso {
+  id: string;
+  pessoa: Pessoa;
+  item_chave: string | null;
+  mensagem: string | null;
+  criado_em: string;
+}
+export interface GestorAcompanha {
+  pessoa: Pessoa;
+  desde: string;
+}
+export interface EspacoExplorar {
+  sigla: string;
+  nome: string;
+  aberto: boolean;
+  meu_papel: string | null;
+  acompanha: boolean;
+  em_suporte: boolean;
 }
 
 export class ErroApi extends Error {
@@ -458,7 +505,7 @@ export const api = {
 
   // --- Etapa 2 ---
   times: (todos = false) => pedir<TimeItem[]>(`/api/times${todos ? "?todos=true" : ""}`),
-  criarTime: (nome: string) => pedir<TimeItem>("/api/admin/times", { method: "POST", body: json({ nome }) }),
+  criarTime: (nome: string) => pedir<TimeDetalhe>("/api/times", { method: "POST", body: json({ nome }) }),
   alterarTime: (id: string, dados: { nome?: string; ativo?: boolean }) =>
     pedir<void>(`/api/admin/times/${id}`, { method: "PATCH", body: json(dados) }),
   limiteAnexos: () => pedir<{ limite_mb: number }>("/api/admin/limite-anexos"),
@@ -577,6 +624,38 @@ export const api = {
   criarStatusPadrao: (nome: string, categoria: string, confirmar = false) =>
     pedir<StatusCatalogo[]>("/api/admin/status", { method: "POST", body: json({ nome, categoria, confirmar }) }),
   promoverStatus: (id: string) => pedir<StatusCatalogo[]>(`/api/admin/status/${id}/promover`, { method: "POST" }),
+
+  // --- Etapa 4 ---
+  gestaoTimes: () => pedir<{ pode_criar: boolean; times: TimeDetalhe[] }>("/api/times/gestao"),
+  adicionarAoTime: (id: string, usuario_id: string) =>
+    pedir<void>(`/api/times/${id}/membros`, { method: "POST", body: json({ usuario_id }) }),
+  tirarDoTime: (id: string, usuarioId: string) => pedir<void>(`/api/times/${id}/membros/${usuarioId}`, { method: "DELETE" }),
+  timesComAcesso: (sigla: string) => pedir<AcessoTime[]>(`/api/espacos/${sigla}/times-acesso`),
+  darAcessoTime: (sigla: string, time_id: string, papel: string) =>
+    pedir<void>(`/api/espacos/${sigla}/times-acesso`, { method: "POST", body: json({ time_id, papel }) }),
+  mudarAcessoTime: (sigla: string, timeId: string, papel: string) =>
+    pedir<void>(`/api/espacos/${sigla}/times-acesso/${timeId}`, { method: "PATCH", body: json({ papel }) }),
+  tirarAcessoTime: (sigla: string, timeId: string) => pedir<void>(`/api/espacos/${sigla}/times-acesso/${timeId}`, { method: "DELETE" }),
+  acompanhar: (sigla: string, sim: boolean) => pedir<void>(`/api/espacos/${sigla}/acompanhar`, { method: "PUT", body: json({ sim }) }),
+  gestoresDoEspaco: (sigla: string) => pedir<GestorAcompanha[]>(`/api/espacos/${sigla}/gestores`),
+  entrarSuporte: (sigla: string, motivo: string) =>
+    pedir<void>(`/api/espacos/${sigla}/suporte`, { method: "POST", body: json({ motivo }) }),
+  sairSuporte: (sigla: string) => pedir<void>(`/api/espacos/${sigla}/suporte`, { method: "DELETE" }),
+  marcarAberto: (sigla: string, aberto: boolean) => pedir<void>(`/api/espacos/${sigla}/aberto`, { method: "PUT", body: json({ aberto }) }),
+  solicitarAcessoEspaco: (sigla: string, mensagem?: string) =>
+    pedir<void>(`/api/espacos/${sigla}/solicitar-acesso`, { method: "POST", body: json({ mensagem: mensagem || null }) }),
+  solicitarAcessoItem: (chave: string, mensagem?: string) =>
+    pedir<void>(`/api/itens/${chave}/solicitar-acesso`, { method: "POST", body: json({ mensagem: mensagem || null }) }),
+  pedidosAcesso: (sigla: string) => pedir<PedidoAcesso[]>(`/api/espacos/${sigla}/pedidos`),
+  aprovarPedido: (sigla: string, id: string, papel: string) =>
+    pedir<void>(`/api/espacos/${sigla}/pedidos/${id}/aprovar`, { method: "POST", body: json({ papel }) }),
+  recusarPedido: (sigla: string, id: string) => pedir<void>(`/api/espacos/${sigla}/pedidos/${id}/recusar`, { method: "POST" }),
+  compartilhamentos: (sigla: string) => pedir<Pessoa[]>(`/api/espacos/${sigla}/compartilhamentos`),
+  compartilhar: (sigla: string, usuario_id: string) =>
+    pedir<void>(`/api/espacos/${sigla}/compartilhamentos`, { method: "POST", body: json({ usuario_id }) }),
+  descompartilhar: (sigla: string, usuarioId: string) =>
+    pedir<void>(`/api/espacos/${sigla}/compartilhamentos/${usuarioId}`, { method: "DELETE" }),
+  explorar: () => pedir<EspacoExplorar[]>("/api/explorar"),
 
   dominios: () => pedir<Dominio[]>("/api/admin/dominios"),
   adicionarDominio: (dominio: string) =>

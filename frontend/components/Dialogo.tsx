@@ -25,16 +25,22 @@ export function Dialogo({
   aoCancelar: () => void;
 }) {
   const cancelar = useRef<HTMLButtonElement>(null);
+  // Guarda a versão mais recente das funções sem refazer o efeito: assim o foco não volta para
+  // "Cancelar" a cada letra digitada num campo dentro da janela.
+  const atual = useRef({ ocupado, aoCancelar });
+  useEffect(() => {
+    atual.current = { ocupado, aoCancelar };
+  });
 
   useEffect(() => {
     if (!aberto) return;
     cancelar.current?.focus();
     const tecla = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !ocupado) aoCancelar();
+      if (e.key === "Escape" && !atual.current.ocupado) atual.current.aoCancelar();
     };
     document.addEventListener("keydown", tecla);
     return () => document.removeEventListener("keydown", tecla);
-  }, [aberto, ocupado, aoCancelar]);
+  }, [aberto]);
 
   if (!aberto) return null;
 

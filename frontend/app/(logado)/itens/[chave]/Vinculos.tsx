@@ -1,8 +1,9 @@
 "use client";
 
-import { IconLock, IconPlus, IconX } from "@tabler/icons-react";
+import { IconKey, IconLock, IconPlus, IconX } from "@tabler/icons-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { DialogoSolicitar } from "@/components/AcessoEspaco";
 import { Dialogo } from "@/components/Dialogo";
 import { EtiquetaStatus } from "@/components/EtiquetaStatus";
 import { api, ErroApi, type ItemCurto, type Vinculo } from "@/lib/api";
@@ -33,6 +34,7 @@ export function Vinculos({
   const [aviso, setAviso] = useState<string | null>(null);
   const [pendente, setPendente] = useState("");
   const [ocupado, setOcupado] = useState(false);
+  const [pedindo, setPedindo] = useState<string | null>(null);
 
   useEffect(() => {
     if (busca.trim().length < 2) {
@@ -97,7 +99,13 @@ export function Vinculos({
                 <span className="etiqueta etiqueta-neutra">
                   <IconLock size={12} stroke={1.5} /> acesso restrito
                 </span>
-                {/* O botão Solicitar acesso chega na Etapa 4, junto com as permissões completas. */}
+                {v.pedido_pendente ? (
+                  <span className="legenda">Acesso solicitado</span>
+                ) : (
+                  <button className="botao botao-discreto" onClick={() => setPedindo(v.chave)}>
+                    <IconKey size={14} stroke={1.5} /> Solicitar acesso
+                  </button>
+                )}
               </>
             ) : (
               <>
@@ -191,6 +199,17 @@ export function Vinculos({
         .sugestoes-itens button{width:100%;text-align:left;border:none;background:none;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:13px}
         .sugestoes-itens button:hover{background:var(--verde-fundo)}
       `}</style>
+      <DialogoSolicitar
+        aberto={pedindo !== null}
+        titulo={`Pedir acesso a ${pedindo ?? ""}?`}
+        texto="O ADM do espaço onde o item está recebe o pedido e escolhe o seu papel ao aprovar."
+        enviar={(m) => api.solicitarAcessoItem(pedindo ?? "", m)}
+        aoFechar={() => setPedindo(null)}
+        aoEnviar={() => {
+          setPedindo(null);
+          void aoMudar();
+        }}
+      />
     </section>
   );
 }

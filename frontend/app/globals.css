@@ -544,3 +544,24 @@ textarea.campo {
   content: " *";
   color: var(--alerta);
 }
+
+/* Etapa 4 */
+.botao-texto {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.faixa-aviso {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  background: var(--aviso-fundo);
+  border: 0.5px solid var(--aviso);
+  border-radius: var(--raio-card);
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
