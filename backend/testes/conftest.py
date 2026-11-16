@@ -45,6 +45,7 @@ TABELAS = [
     "membros_espaco", "paineis", "tipos_item", "status_item", "opcoes_origem", "itens", "co_responsaveis",
     "apelidos_item", "campos_personalizados", "historico_item", "comentarios", "versoes_comentario", "anexos",
     "vinculos", "config_plataforma", "status_do_espaco", "transicoes", "quadros", "colunas_quadro",
+    "sprints", "itens_da_sprint", "mudancas_status",
 ]
 
 # Mesmos dados iniciais das migrações (tipos e status padrão, limite de anexos).

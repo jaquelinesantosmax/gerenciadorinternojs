@@ -111,4 +111,5 @@ from . import (
     modelos_espacos,  # noqa: E402, F401
     modelos_itens,  # noqa: E402, F401
     modelos_quadros,  # noqa: E402, F401
+    modelos_scrum,  # noqa: E402, F401
 )

@@ -75,6 +75,8 @@ class Item(Base):
     data_real_entrega: Mapped[date | None] = mapped_column(Date)
     justificativa_atraso: Mapped[str | None] = mapped_column(Text)
     estimativa: Mapped[Decimal | None] = mapped_column(Numeric(8, 2))
+    # Decisão de 16/11: estimativa em horas separada dos story points.
+    estimativa_horas: Mapped[Decimal | None] = mapped_column(Numeric(8, 2))
     pai_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("itens.id"), index=True)
     painel_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("paineis.id"), index=True)
     origem_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("opcoes_origem.id"))

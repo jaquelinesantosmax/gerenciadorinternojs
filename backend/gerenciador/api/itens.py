@@ -107,6 +107,7 @@ class ItemDetalhe(BaseModel):
     data_real_entrega: date | None
     justificativa_atraso: str | None
     estimativa: Decimal | None
+    estimativa_horas: Decimal | None
     pai: ItemCurto | None
     filhos: list[ItemCurto]
     painel: Ref | None
@@ -254,6 +255,7 @@ def _detalhe(db: Session, usuario: Usuario, item: Item, espaco: Espaco) -> ItemD
         time=_ref(db.get(TimeProvisorio, item.time_id)), data_inicio=item.data_inicio,
         data_entrega=item.data_entrega, data_real_entrega=item.data_real_entrega,
         justificativa_atraso=item.justificativa_atraso, estimativa=item.estimativa,
+        estimativa_horas=item.estimativa_horas,
         pai=_curto(db, espaco, pai) if pai and pai.excluido_em is None else None,
         filhos=[_curto(db, espaco, f) for f in itens_svc.filhos(db, item)],
         painel=_ref(db.get(Painel, item.painel_id)) if item.painel_id else None,

@@ -49,6 +49,8 @@ class Quadro(Base):
     tipo: Mapped[str] = mapped_column(String(16))
     # Kanban: itens em Backlog ficam numa área separada, fora do quadro (decisão de 16/11).
     usa_backlog: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Scrum: unidade da estimativa (pontos, horas ou contagem de itens), escolhida por quadro.
+    unidade_estimativa: Mapped[str] = mapped_column(String(16), default="pontos", server_default="pontos")
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 

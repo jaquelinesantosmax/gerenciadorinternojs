@@ -32,7 +32,7 @@ _CHAVE = re.compile(r"^([A-Za-z]{2,10})-(\d{1,9})$")
 # Campos que a pessoa pode mandar ao criar ou editar.
 CAMPOS_PADRAO = {
     "tipo_id", "resumo", "descricao", "status_id", "prioridade", "responsavel_id", "time_id",
-    "data_inicio", "data_entrega", "data_real_entrega", "justificativa_atraso", "estimativa",
+    "data_inicio", "data_entrega", "data_real_entrega", "justificativa_atraso", "estimativa", "estimativa_horas",
     "pai_id", "painel_id", "origem_id", "categorias", "co_responsaveis", "valores",
 }
 
@@ -40,7 +40,8 @@ ROTULOS = {
     "tipo_id": "Tipo", "resumo": "Resumo", "descricao": "Descrição", "status_id": "Status",
     "prioridade": "Prioridade", "responsavel_id": "Responsável", "time_id": "Time",
     "data_inicio": "Data de início", "data_entrega": "Data de entrega", "data_real_entrega": "Data real da entrega",
-    "justificativa_atraso": "Justificativa do atraso", "estimativa": "Estimativa", "pai_id": "Pai",
+    "justificativa_atraso": "Justificativa do atraso", "estimativa": "Estimativa", "estimativa_horas": "Estimativa em horas",
+    "pai_id": "Pai",
     "painel_id": "Painel", "origem_id": "Origem da solicitação", "categorias": "Categorias",
     "co_responsaveis": "Co-responsáveis",
 }
@@ -195,6 +196,7 @@ class Estado:
     data_real_entrega: date | None
     justificativa_atraso: str | None
     estimativa: Decimal | None
+    estimativa_horas: Decimal | None
     pai_id: uuid.UUID | None
     painel_id: uuid.UUID | None
     origem_id: uuid.UUID | None
@@ -277,15 +279,20 @@ def _conferir(
     if data_real and data_real > data_entrega and not justificativa:
         raise ErroDeRegra("A entrega real passou da data de entrega: informe a justificativa do atraso.")
 
-    estimativa_bruta = valor("estimativa")
-    estimativa = None
-    if estimativa_bruta not in (None, ""):
+    def numero(campo: str, rotulo: str) -> Decimal | None:
+        bruto = valor(campo)
+        if bruto in (None, ""):
+            return None
         try:
-            estimativa = Decimal(str(estimativa_bruta))
+            convertido = Decimal(str(bruto))
         except InvalidOperation as erro:
-            raise ErroDeRegra("Estimativa: valor inválido.") from erro
-        if estimativa < 0 or estimativa >= Decimal("1000000"):
-            raise ErroDeRegra("Estimativa: valor inválido.")
+            raise ErroDeRegra(f"{rotulo}: valor inválido.") from erro
+        if not convertido.is_finite() or convertido < 0 or convertido >= Decimal("1000000"):
+            raise ErroDeRegra(f"{rotulo}: valor inválido.")
+        return convertido
+
+    estimativa = numero("estimativa", "Estimativa")
+    estimativa_horas = numero("estimativa_horas", "Estimativa em horas")
 
     pai_id = _uuid(valor("pai_id"), "Pai")
     if tipo.nivel == "epico" and pai_id:
@@ -358,7 +365,8 @@ def _conferir(
     return Estado(
         tipo=tipo, resumo=resumo, descricao=descricao, status_id=status_id, prioridade=prioridade,
         responsavel_id=responsavel_id, time_id=time_id, data_inicio=data_inicio, data_entrega=data_entrega,
-        data_real_entrega=data_real, justificativa_atraso=justificativa, estimativa=estimativa, pai_id=pai_id,
+        data_real_entrega=data_real, justificativa_atraso=justificativa, estimativa=estimativa,
+        estimativa_horas=estimativa_horas, pai_id=pai_id,
         painel_id=painel_id, origem_id=origem_id, categorias=_categorias(valor("categorias")),
         co_responsaveis=co_ids, valores=valores,
     )
@@ -414,6 +422,16 @@ def _historico(db: Session, item: Item, autor: Usuario, campo: str, antes: str |
 
 # --- Criar, editar e excluir -----------------------------------------------------------------
 
+def registrar_mudanca_status(
+    db: Session, item: Item, de: StatusItem | None, para: StatusItem, quando=None
+) -> None:
+    """Guarda cada mudança de status com a categoria de destino (base do fluxo acumulado e do tempo de ciclo)."""
+    from .modelos_scrum import MudancaStatus
+
+    db.add(MudancaStatus(item_id=item.id, de_status_id=de.id if de else None, para_status_id=para.id,
+                         categoria=para.categoria, quando=quando or relogio.agora()))
+
+
 def criar(db: Session, ator: Usuario, espaco: Espaco, dados: dict[str, Any]) -> Item:
     if not pode_no_espaco(db, ator, espaco, "criar_itens"):
         raise SemPermissao("Você não tem permissão para criar itens neste espaço.")
@@ -429,7 +447,7 @@ def criar(db: Session, ator: Usuario, espaco: Espaco, dados: dict[str, Any]) -> 
         responsavel_id=estado.responsavel_id, relator_id=ator.id, time_id=estado.time_id,
         data_inicio=estado.data_inicio, data_entrega=estado.data_entrega,
         data_real_entrega=estado.data_real_entrega, justificativa_atraso=estado.justificativa_atraso,
-        estimativa=estado.estimativa, pai_id=estado.pai_id, painel_id=estado.painel_id,
+        estimativa=estado.estimativa, estimativa_horas=estado.estimativa_horas, pai_id=estado.pai_id, painel_id=estado.painel_id,
         origem_id=estado.origem_id, categorias=estado.categorias, valores=estado.valores,
         criado_em=agora, atualizado_em=agora,
     )
@@ -438,6 +456,7 @@ def criar(db: Session, ator: Usuario, espaco: Espaco, dados: dict[str, Any]) -> 
     db.flush()
     for uid in estado.co_responsaveis:
         db.add(CoResponsavel(item_id=item.id, usuario_id=uid))
+    registrar_mudanca_status(db, item, None, db.get(StatusItem, item.status_id), agora)
     db.add(HistoricoItem(item_id=item.id, autor_id=ator.id, ocorrido_em=agora, campo="criado",
                          valor_anterior=None, valor_novo=chave(espaco, item)))
     db.commit()
@@ -467,6 +486,8 @@ def editar(
     from .workflow import conferir_transicao
 
     conferir_transicao(db, espaco, status_atual, novo_status)
+    if novo_status.id != status_atual.id:
+        registrar_mudanca_status(db, item, status_atual, novo_status)
     if novo_status.categoria == "concluido" and status_atual.categoria != "concluido":
         bloqueios = bloqueios_abertos(db, ator, item)
         if bloqueios and not confirmar_bloqueio:
@@ -544,7 +565,8 @@ def clonar(
         "prioridade": item.prioridade, "responsavel_id": item.responsavel_id, "time_id": item.time_id,
         "data_inicio": item.data_inicio, "data_entrega": item.data_entrega,
         "data_real_entrega": item.data_real_entrega, "justificativa_atraso": item.justificativa_atraso,
-        "estimativa": item.estimativa, "pai_id": item.pai_id, "painel_id": item.painel_id,
+        "estimativa": item.estimativa, "estimativa_horas": item.estimativa_horas, "pai_id": item.pai_id,
+        "painel_id": item.painel_id,
         "origem_id": item.origem_id, "categorias": list(item.categorias),
         "co_responsaveis": co_responsaveis(db, item),
         "valores": {cid: v for cid, v in item.valores.items()

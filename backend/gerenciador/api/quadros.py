@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import date
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, Field
@@ -51,6 +52,7 @@ class QuadroResumo(BaseModel):
     tipo: str
     painel_id: uuid.UUID | None
     usa_backlog: bool
+    unidade_estimativa: str = "pontos"
 
 
 class Card(BaseModel):
@@ -67,6 +69,8 @@ class Card(BaseModel):
     atrasado: bool
     bloqueado: bool
     painel: str | None
+    estimativa: Decimal | None = None
+    estimativa_horas: Decimal | None = None
 
 
 class ColunaSaida(BaseModel):
@@ -239,7 +243,8 @@ def _quadro_do_usuario(db: Session, usuario: Usuario, quadro_id: uuid.UUID) -> t
 
 
 def _resumo(q: Quadro) -> QuadroResumo:
-    return QuadroResumo(id=q.id, nome=q.nome, tipo=q.tipo, painel_id=q.painel_id, usa_backlog=q.usa_backlog)
+    return QuadroResumo(id=q.id, nome=q.nome, tipo=q.tipo, painel_id=q.painel_id, usa_backlog=q.usa_backlog,
+                        unidade_estimativa=q.unidade_estimativa)
 
 
 @rotas.get("/espacos/{sigla}/quadros", response_model=list[QuadroResumo])
@@ -256,34 +261,51 @@ def criar_quadro(
     return _resumo(wf.novo_quadro(db, usuario, espaco, pedido.nome, pedido.tipo))
 
 
-@rotas.get("/quadros/{quadro_id}", response_model=QuadroSaida)
-def ver_quadro(quadro_id: uuid.UUID, usuario: Usuario = Depends(usuario_atual), db: Session = Depends(obter_db)) -> QuadroSaida:
+def cards_de(db: Session, espaco: Espaco, itens: list[Item]) -> list[Card]:
+    """Cards ordenados por prioridade e entrega."""
     from ..itens import chave as chave_item
-    from ..vinculos import bloqueios_abertos
+    from ..scrum import hoje_brasilia
+    from ..vinculos import chaves_que_bloqueiam
 
-    quadro, espaco = _quadro_do_usuario(db, usuario, quadro_id)
-    status = {s.id: s for s in wf.status_do_espaco(db, espaco)}
-    consulta = select(Item).where(Item.espaco_id == espaco.id, Item.excluido_em.is_(None))
-    if quadro.painel_id:
-        consulta = consulta.where(Item.painel_id == quadro.painel_id)
-    itens = list(db.scalars(consulta))
+    status = {s.id: s for s in db.scalars(select(StatusItem))}
     tipos = {t.id: t for t in db.scalars(select(TipoItem))}
     paineis = {p.id: p.nome for p in db.scalars(select(Painel).where(Painel.espaco_id == espaco.id))}
-    hoje = date.today()
+    hoje = hoje_brasilia()
     ordem_prioridade = {"critica": 0, "alta": 1, "media": 2, "baixa": 3}
 
     def card(i: Item) -> Card:
-        s = status.get(i.status_id) or db.get(StatusItem, i.status_id)
+        s = status[i.status_id]
         return Card(
             chave=chave_item(espaco, i), resumo=i.resumo, tipo=tipos[i.tipo_id].nome, nivel=tipos[i.tipo_id].nivel,
             prioridade=i.prioridade, responsavel=PessoaResumo.de(db.get(Usuario, i.responsavel_id)),
             status_id=s.id, status=s.nome, status_categoria=s.categoria, data_entrega=i.data_entrega,
             atrasado=s.categoria != "concluido" and i.data_entrega < hoje,
-            bloqueado=s.categoria != "concluido" and bool(bloqueios_abertos(db, usuario, i)),
+            bloqueado=s.categoria != "concluido" and bool(chaves_que_bloqueiam(db, i)),
             painel=paineis.get(i.painel_id) if i.painel_id else None,
+            estimativa=i.estimativa, estimativa_horas=i.estimativa_horas,
         )
 
-    cards = sorted((card(i) for i in itens), key=lambda c: (ordem_prioridade.get(c.prioridade, 9), c.data_entrega))
+    return sorted((card(i) for i in itens), key=lambda c: (ordem_prioridade.get(c.prioridade, 9), c.data_entrega))
+
+
+@rotas.get("/quadros/{quadro_id}", response_model=QuadroSaida)
+def ver_quadro(
+    quadro_id: uuid.UUID, sprint_id: uuid.UUID | None = None,
+    usuario: Usuario = Depends(usuario_atual), db: Session = Depends(obter_db),
+) -> QuadroSaida:
+    """Colunas com os cards. Com sprint_id, mostra só os itens daquela sprint (quadro da sprint ativa)."""
+    from .. import scrum
+
+    quadro, espaco = _quadro_do_usuario(db, usuario, quadro_id)
+    status = {s.id: s for s in wf.status_do_espaco(db, espaco)}
+    if sprint_id:
+        sprint, quadro_da_sprint, _ = scrum.buscar_sprint(db, sprint_id)
+        if quadro_da_sprint.id != quadro.id:
+            raise HTTPException(status_code=404, detail="Sprint não encontrada.")
+        itens = scrum.itens_da_sprint(db, sprint)
+    else:
+        itens = scrum.itens_do_quadro(db, quadro)
+    cards = cards_de(db, espaco, itens)
     colunas_saida, mapeados = [], set()
     for c in wf.colunas_do_quadro(db, quadro):
         mapeados |= set(c.status_ids)
@@ -295,7 +317,7 @@ def ver_quadro(quadro_id: uuid.UUID, usuario: Usuario = Depends(usuario_atual), 
             acima_do_limite=c.limite is not None and len(da_coluna) > c.limite,
         ))
     fora = [x for x in cards if x.status_id not in mapeados]
-    backlog = [x for x in fora if quadro.usa_backlog and x.status_categoria == "a_fazer"]
+    backlog = [x for x in fora if quadro.usa_backlog and x.status_categoria == "a_fazer" and not sprint_id]
     return QuadroSaida(
         **_resumo(quadro).model_dump(), colunas=colunas_saida, backlog=backlog,
         sem_coluna=[x for x in fora if x not in backlog],

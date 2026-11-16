@@ -47,6 +47,8 @@ ACOES_ESPACO: dict[str, frozenset[str]] = {
     "configurar": frozenset({"adm", "dono"}),
     "gerenciar_membros": frozenset({"adm"}),
     "criar_paineis": frozenset({"adm"}),
+    # Matriz: "Gerenciar sprints" — ADM do espaço e Membro.
+    "gerenciar_sprints": frozenset({"adm", "membro", "dono"}),
 }
 
 
