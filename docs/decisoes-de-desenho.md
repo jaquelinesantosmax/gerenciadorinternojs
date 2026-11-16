@@ -133,6 +133,9 @@ Decididos em 16/11, para a Etapa 2
 - Status em uso só é apagado depois de mover os itens.
 - O ADM da plataforma pode promover um status de espaço a padrão, que passa a ficar disponível como opção, sem ser imposto.
 - Concluir item ainda bloqueado: permitido, com alerta listando os bloqueios e confirmação registrada no histórico, em todos os workflows.
+- Decidido em 16/11: todo espaço nasce com os 8 status padrão ligados; o ADM desliga os que não usa e cria status próprios.
+- Decidido em 16/11: cada modelo (Scrum, Kanban, Gestão de tarefas) já nasce com um fluxo de transições definido, que o ADM do espaço ajusta. O fluxo de cada modelo está em definição.
+- Decidido em 16/11: a Etapa 3 é entregue em duas partes. 3a: catálogo de status, workflow, quadros Kanban e simples (colunas e limite) e as abas Lista, Kanban e Gantt. 3b: Scrum (backlog, sprints, burndown, velocidade e relatório) e métricas do Kanban.
 
 ## Itens relacionados e anexos
 
