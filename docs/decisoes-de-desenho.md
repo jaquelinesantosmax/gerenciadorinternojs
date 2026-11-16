@@ -106,6 +106,20 @@ Campos padronizados
 - No service desk, a Data de início é preenchida com a data de abertura; os campos de gestão não aparecem para quem abre e são exigidos quando o ticket sai da fila para atuação; a Data de entrega vem do SLA de resolução.
 - Os demais campos são personalizados, criados pelo ADM do espaço.
 
+Decididos em 16/11, para a Etapa 2
+
+- Prioridade com 4 valores: Crítica, Alta, Média e Baixa.
+- Time: até o cadastro de Times da Etapa 4, o campo usa uma lista provisória de nomes mantida pelo ADM da plataforma.
+- Status: até a Etapa 3, os itens usam os 8 status padrão, com troca livre entre eles; as transições chegam com o workflow.
+- Membros: quem cria o espaço vira ADM dele e adiciona pessoas uma a uma como ADM, Membro ou Leitor, seguindo a matriz. Times, espaço aberto, Solicitar acesso e Gestor ficam na Etapa 4.
+- Sigla do espaço: o ADM escolhe de 2 a 10 letras maiúsculas na criação, sem repetir a de outro espaço; a sigla não muda depois. As chaves dos itens seguem a sigla (ex.: LOP-12).
+- Categorias: etiquetas livres, com sugestão das que já existem no espaço.
+- Origem da solicitação: cada espaço tem a própria lista de opções, mantida pelo ADM do espaço.
+- Na Etapa 2 entram espaços de projeto (o modelo escolhido na criação fica guardado e passa a valer na Etapa 3) e espaços pessoais; os itens aparecem numa lista simples até os quadros chegarem. Service desk fica na Etapa 5.
+- Tipos de campo personalizado: texto curto, texto longo, número, moeda (o ADM escolhe a moeda), data, data e hora, URL, lista de escolha única, lista de escolha múltipla, lista em cascata, pessoa e sim/não.
+- Ao criar um campo personalizado, o ADM do espaço escolhe em quais tipos de item ele aparece e se é obrigatório.
+- Tipos de item próprios ficam no nível de História, Tarefa e Bug: podem estar dentro de um Épico e ter Subtarefas.
+
 ## Status e workflow
 
 - Status é obrigatório. Padrão da plataforma: Backlog, A fazer, Em andamento, Em validação, Aguardando terceiros, Bloqueado, Concluído e Cancelado.
@@ -126,7 +140,7 @@ Itens relacionados
 - Aparece no item, como coluna e filtro na Lista, como ícone de bloqueio no card do Kanban e como seta no Gantt.
 - Clonar um item cria o vínculo "Clona" automaticamente.
 - Item em espaço sem acesso: chave visível, marca "acesso restrito" e botão Solicitar acesso.
-- Sem links externos (URL, Confluence, Google Docs) no item.
+- Sem links externos (URL, Confluence, Google Docs) nos itens relacionados. Decidido em 16/11: um campo personalizado do tipo URL é permitido.
 - Validações: sem vínculo com o próprio item, sem vínculo repetido, aviso de bloqueio circular.
 
 Anexos
