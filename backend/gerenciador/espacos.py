@@ -7,7 +7,7 @@ No espaço pessoal, só o dono tem acesso (compartilhamento só leitura chega na
 import re
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -29,46 +29,105 @@ from .papeis import exigir as exigir_plataforma
 
 _SIGLA = re.compile(r"^[A-Z]{2,10}$")
 
-NOME_PAPEL_ESPACO = {"adm": "ADM do espaço", "membro": "Membro", "leitor": "Leitor", "dono": "Dono"}
-
-# Ações dentro de um espaço e quem pode fazer cada uma. "dono" é o dono de um espaço pessoal.
-# "proprios" nas regras de excluir é tratado no módulo de itens.
-ACOES_ESPACO: dict[str, frozenset[str]] = {
-    "ver": frozenset({"adm", "membro", "leitor", "dono"}),
-    "criar_itens": frozenset({"adm", "membro", "dono"}),
-    "editar_itens": frozenset({"adm", "membro", "dono"}),
-    "comentar": frozenset({"adm", "membro", "leitor", "dono"}),
-    "anexar": frozenset({"adm", "membro", "leitor", "dono"}),
-    "vincular": frozenset({"adm", "membro", "dono"}),
-    "excluir_qualquer_item": frozenset({"adm", "dono"}),
-    "excluir_proprios_itens": frozenset({"adm", "membro", "dono"}),
-    "excluir_qualquer_anexo": frozenset({"adm", "dono"}),
-    "editar_qualquer_comentario": frozenset({"adm", "dono"}),
-    "configurar": frozenset({"adm", "dono"}),
-    "gerenciar_membros": frozenset({"adm"}),
-    "criar_paineis": frozenset({"adm"}),
-    # Matriz: "Gerenciar sprints" — ADM do espaço e Membro.
-    "gerenciar_sprints": frozenset({"adm", "membro", "dono"}),
+NOME_PAPEL_ESPACO = {
+    "adm": "ADM do espaço", "membro": "Membro", "leitor": "Leitor", "dono": "Dono", "gestor": "Gestor",
+    "suporte": "Suporte (ADM da plataforma)", "aberto": "Leitura (espaço aberto)", "compartilhado": "Compartilhado com você",
 }
+
+# Matriz do espaço de projeto (docs/matriz-de-permissoes.md). Cada ação e quem pode fazer.
+# "dono": dono do espaço pessoal. "compartilhado": pessoa com quem o espaço pessoal foi compartilhado (só leitura).
+# "suporte": ADM da plataforma em suporte, com poderes de ADM do espaço (decisão de 16/11).
+# "aberto": qualquer pessoa da empresa num espaço marcado como aberto.
+# Regras de "só os próprios" (excluir itens, comentários e anexos) ficam nos módulos de cada coisa.
+_ADM = {"adm", "suporte", "dono"}
+ACOES_ESPACO: dict[str, frozenset[str]] = {
+    "ver": frozenset(_ADM | {"membro", "leitor", "gestor", "aberto", "compartilhado"}),
+    "criar_itens": frozenset(_ADM | {"membro", "gestor"}),
+    "editar_itens": frozenset(_ADM | {"membro", "gestor"}),
+    "comentar": frozenset(_ADM | {"membro", "leitor", "gestor", "aberto"}),
+    "anexar": frozenset(_ADM | {"membro", "leitor", "gestor", "aberto"}),
+    "vincular": frozenset(_ADM | {"membro", "gestor"}),
+    "excluir_qualquer_item": frozenset(_ADM),
+    "excluir_proprios_itens": frozenset(_ADM | {"membro", "gestor"}),
+    "excluir_qualquer_anexo": frozenset(_ADM),
+    "editar_qualquer_comentario": frozenset(_ADM),
+    "configurar": frozenset(_ADM | {"gestor"}),
+    "gerenciar_membros": frozenset({"adm", "suporte", "gestor"}),
+    "aprovar_acesso": frozenset({"adm", "suporte", "gestor"}),
+    "marcar_aberto": frozenset({"adm", "suporte"}),
+    "ver_gestores": frozenset({"adm", "suporte", "membro"}),
+    "criar_paineis": frozenset({"adm", "suporte", "gestor"}),
+    "gerenciar_sprints": frozenset({"adm", "suporte", "membro", "dono"}),
+    "compartilhar": frozenset({"dono"}),
+}
+
+# Ordem de força, para mostrar um papel só e para a regra "vale o maior" (decisão de 16/11).
+_FORCA = ["dono", "adm", "suporte", "gestor", "membro", "leitor", "aberto", "compartilhado"]
+_FORCA_MEMBRO = {"adm": 3, "membro": 2, "leitor": 1}
+
+
+def papel_de_membro(db: Session, usuario: Usuario, espaco: Espaco) -> str | None:
+    """Papel dado à pessoa (direto ou por time). Se houver mais de um, vale o maior."""
+    from .modelos_acesso import AcessoTime, MembroTime
+
+    papeis = set(db.scalars(select(MembroEspaco.papel).where(MembroEspaco.espaco_id == espaco.id,
+                                                             MembroEspaco.usuario_id == usuario.id)))
+    papeis |= set(db.scalars(
+        select(AcessoTime.papel).join(MembroTime, MembroTime.time_id == AcessoTime.time_id)
+        .where(AcessoTime.espaco_id == espaco.id, MembroTime.usuario_id == usuario.id)
+    ))
+    return max(papeis, key=lambda p: _FORCA_MEMBRO[p]) if papeis else None
+
+
+def papeis_no_espaco(db: Session, usuario: Usuario, espaco: Espaco) -> set[str]:
+    from .modelos_acesso import Compartilhamento, SessaoSuporte
+    from .papeis import GESTOR, papeis_ativos
+
+    if not usuario.ativo:
+        return set()
+    if espaco.tipo == "pessoal":
+        # Espaço pessoal fica fora do alcance do Gestor e do suporte do ADM da plataforma.
+        if espaco.dono_id == usuario.id:
+            return {"dono"}
+        compartilhado = db.scalar(select(Compartilhamento.id).where(Compartilhamento.espaco_id == espaco.id,
+                                                                    Compartilhamento.usuario_id == usuario.id))
+        return {"compartilhado"} if compartilhado else set()
+    papeis: set[str] = set()
+    membro = papel_de_membro(db, usuario, espaco)
+    if membro:
+        papeis.add(membro)
+    if GESTOR in papeis_ativos(db, usuario.id):
+        papeis.add("gestor")
+    suporte = db.scalar(select(SessaoSuporte.id).where(
+        SessaoSuporte.usuario_id == usuario.id, SessaoSuporte.espaco_id == espaco.id,
+        SessaoSuporte.encerrada_em.is_(None), SessaoSuporte.expira_em > relogio.agora()))
+    if suporte:
+        papeis.add("suporte")
+    if espaco.aberto:
+        papeis.add("aberto")
+    return papeis
 
 
 def papel_no_espaco(db: Session, usuario: Usuario, espaco: Espaco) -> str | None:
-    if not usuario.ativo:
-        return None
-    if espaco.tipo == "pessoal":
-        return "dono" if espaco.dono_id == usuario.id else None
-    return db.scalar(
-        select(MembroEspaco.papel).where(MembroEspaco.espaco_id == espaco.id, MembroEspaco.usuario_id == usuario.id)
-    )
+    """O papel mais forte da pessoa no espaço (para mostrar na tela)."""
+    papeis = papeis_no_espaco(db, usuario, espaco)
+    return next((p for p in _FORCA if p in papeis), None)
 
 
-def permissoes_no_espaco(papel: str | None) -> dict[str, bool]:
-    return {acao: papel is not None and papel in quem for acao, quem in ACOES_ESPACO.items()}
+def permissoes_no_espaco(papeis: set[str] | str | None) -> dict[str, bool]:
+    if papeis is None:
+        papeis = set()
+    elif isinstance(papeis, str):
+        papeis = {papeis}
+    return {acao: bool(papeis & quem) for acao, quem in ACOES_ESPACO.items()}
+
+
+def permissoes_do_usuario(db: Session, usuario: Usuario, espaco: Espaco) -> dict[str, bool]:
+    return permissoes_no_espaco(papeis_no_espaco(db, usuario, espaco))
 
 
 def pode_no_espaco(db: Session, usuario: Usuario, espaco: Espaco, acao: str) -> bool:
-    papel = papel_no_espaco(db, usuario, espaco)
-    return papel is not None and papel in ACOES_ESPACO[acao]
+    return bool(papeis_no_espaco(db, usuario, espaco) & ACOES_ESPACO[acao])
 
 
 def buscar_espaco(db: Session, usuario: Usuario, sigla: str, acao: str = "ver") -> Espaco:
@@ -150,29 +209,50 @@ def editar_espaco(db: Session, ator: Usuario, espaco: Espaco, nome: str | None, 
 
 
 def listar_meus_espacos(db: Session, usuario: Usuario) -> list[tuple[Espaco, str]]:
-    projetos = db.execute(
-        select(Espaco, MembroEspaco.papel)
-        .join(MembroEspaco, MembroEspaco.espaco_id == Espaco.id)
-        .where(MembroEspaco.usuario_id == usuario.id, Espaco.tipo == "projeto")
-    ).all()
-    pessoais = db.scalars(select(Espaco).where(Espaco.tipo == "pessoal", Espaco.dono_id == usuario.id)).all()
-    resultado = [(e, p) for e, p in projetos] + [(e, "dono") for e in pessoais]
+    """Espaços do menu: onde a pessoa é membro (direto ou por time), os que acompanha como Gestor,
+    os em suporte, os pessoais dela e os compartilhados com ela."""
+    from .modelos_acesso import AcessoTime, Compartilhamento, GestorAcompanha, MembroTime, SessaoSuporte
+
+    ids = set(db.scalars(select(MembroEspaco.espaco_id).where(MembroEspaco.usuario_id == usuario.id)))
+    ids |= set(db.scalars(select(AcessoTime.espaco_id).join(MembroTime, MembroTime.time_id == AcessoTime.time_id)
+                          .where(MembroTime.usuario_id == usuario.id)))
+    ids |= set(db.scalars(select(GestorAcompanha.espaco_id).where(GestorAcompanha.usuario_id == usuario.id)))
+    ids |= set(db.scalars(select(SessaoSuporte.espaco_id).where(
+        SessaoSuporte.usuario_id == usuario.id, SessaoSuporte.encerrada_em.is_(None), SessaoSuporte.expira_em > relogio.agora())))
+    ids |= set(db.scalars(select(Espaco.id).where(Espaco.tipo == "pessoal", Espaco.dono_id == usuario.id)))
+    ids |= set(db.scalars(select(Compartilhamento.espaco_id).where(Compartilhamento.usuario_id == usuario.id)))
+    resultado = []
+    for espaco in db.scalars(select(Espaco).where(Espaco.id.in_(ids))) if ids else []:
+        papel = papel_no_espaco(db, usuario, espaco)
+        if papel:
+            resultado.append((espaco, papel))
     return sorted(resultado, key=lambda par: (par[0].tipo != "projeto", par[0].nome.lower()))
+
+
+def pessoas_com_papel(db: Session, espaco: Espaco, papeis: set[str]) -> set[uuid.UUID]:
+    """Pessoas ativas com um destes papéis no espaço, diretamente ou por time."""
+    from .modelos_acesso import AcessoTime, MembroTime
+
+    diretos = set(db.scalars(select(MembroEspaco.usuario_id).join(Usuario, Usuario.id == MembroEspaco.usuario_id)
+                             .where(MembroEspaco.espaco_id == espaco.id, MembroEspaco.papel.in_(papeis), Usuario.ativo)))
+    por_time = set(db.scalars(
+        select(MembroTime.usuario_id).join(AcessoTime, AcessoTime.time_id == MembroTime.time_id)
+        .join(Usuario, Usuario.id == MembroTime.usuario_id)
+        .where(AcessoTime.espaco_id == espaco.id, AcessoTime.papel.in_(papeis), Usuario.ativo)
+    ))
+    return diretos | por_time
 
 
 # --- Membros ----------------------------------------------------------------------------------
 
 def _contar_adms(db: Session, espaco: Espaco) -> int:
-    return db.scalar(
-        select(func.count()).select_from(MembroEspaco)
-        .join(Usuario, Usuario.id == MembroEspaco.usuario_id)
-        .where(MembroEspaco.espaco_id == espaco.id, MembroEspaco.papel == "adm", Usuario.ativo)
-    ) or 0
+    """ADMs ativos do espaço, diretos ou por time."""
+    return len(pessoas_com_papel(db, espaco, {"adm"}))
 
 
 def _exigir_gerenciar_membros(db: Session, ator: Usuario, espaco: Espaco) -> None:
     if espaco.tipo == "pessoal":
-        raise OperacaoNegada("Espaço pessoal não tem membros. O compartilhamento só leitura chega na Etapa 4.")
+        raise OperacaoNegada("Espaço pessoal não tem membros; ele pode ser compartilhado só para leitura.")
     if not pode_no_espaco(db, ator, espaco, "gerenciar_membros"):
         raise SemPermissao("Você não tem permissão para esta ação.")
 

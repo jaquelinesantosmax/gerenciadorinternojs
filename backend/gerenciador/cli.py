@@ -18,7 +18,17 @@ def main(argv: list[str] | None = None) -> int:
     adm = sub.add_parser("criar-adm", help="Cadastra um ADM da plataforma (uso na instalação)")
     adm.add_argument("--email", required=True)
     adm.add_argument("--nome", required=True)
+    sub.add_parser("preparar-dados", help="Completa dados que dependem das regras (roda depois das migrações)")
     args = parser.parse_args(argv)
+
+    if args.comando == "preparar-dados":
+        from .preparar_dados import preparar
+
+        with nova_sessao() as db:
+            contagem = preparar(db)
+        print(f"Dados conferidos: {contagem['espacos']} espaço(s), {contagem['paineis']} painel(is) e "
+              f"{contagem['itens']} item(ns) completados.")
+        return 0
 
     if args.comando == "criar-adm":
         with nova_sessao() as db:

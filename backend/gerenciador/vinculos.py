@@ -118,9 +118,11 @@ class VinculoVisto:
     status: str | None
     status_categoria: str | None
     bloqueio_aberto: bool  # este item é bloqueado por um item ainda não concluído
+    pedido_pendente: bool = False  # quem vê já pediu acesso ao espaço do outro item
 
 
 def listar(db: Session, viewer: Usuario, item: Item) -> list[VinculoVisto]:
+    from . import acesso as acesso_svc
     from .itens import chave
 
     vistos = []
@@ -144,6 +146,7 @@ def listar(db: Session, viewer: Usuario, item: Item) -> list[VinculoVisto]:
                 # A informação de "ainda aberto" aparece mesmo sem acesso, sem revelar o conteúdo.
                 bloqueio_aberto=(v.tipo == "bloqueia" and not sou_origem and status is not None
                                  and status.categoria != "concluido"),
+                pedido_pendente=not acesso and acesso_svc.pedido_pendente(db, viewer, esp) is not None,
             )
         )
     return vistos

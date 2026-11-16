@@ -69,20 +69,8 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_colunas_quadro_quadro_id'), 'colunas_quadro', ['quadro_id'], unique=False)
     # ### end Alembic commands ###
-
-    # Espaços e painéis que já existiam ganham os 8 status, o fluxo padrão e os quadros (decisões de 16/11).
-    from sqlalchemy import select
-    from sqlalchemy.orm import Session
-
-    from gerenciador.modelos_espacos import Espaco, Painel
-    from gerenciador.workflow import preparar_espaco, preparar_painel
-
-    sessao = Session(bind=op.get_bind())
-    for espaco in sessao.scalars(select(Espaco)).all():
-        preparar_espaco(sessao, espaco)
-        for painel in sessao.scalars(select(Painel).where(Painel.espaco_id == espaco.id)).all():
-            preparar_painel(sessao, espaco, painel)
-    sessao.flush()
+    # Os dados iniciais (status, fluxo, quadros e histórico de status) são preenchidos pelo comando
+    # "python -m gerenciador.cli preparar-dados", que roda depois das migrações (infra\ligar.ps1).
 
 
 def downgrade() -> None:

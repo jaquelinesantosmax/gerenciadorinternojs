@@ -85,6 +85,7 @@ class VinculoSaida(BaseModel):
     status: str | None
     status_categoria: str | None
     bloqueio_aberto: bool
+    pedido_pendente: bool = False
 
 
 class ItemDetalhe(BaseModel):
@@ -244,8 +245,7 @@ def _detalhe(db: Session, usuario: Usuario, item: Item, espaco: Espaco) -> ItemD
     tipo = db.get(TipoItem, item.tipo_id)
     status = db.get(StatusItem, item.status_id)
     pai = db.get(Item, item.pai_id) if item.pai_id else None
-    papel = espacos_svc.papel_no_espaco(db, usuario, espaco)
-    permissoes = espacos_svc.permissoes_no_espaco(papel)
+    permissoes = espacos_svc.permissoes_do_usuario(db, usuario, espaco)
     return ItemDetalhe(
         id=item.id, chave=itens_svc.chave(espaco, item), espaco=Ref(id=espaco.id, nome=espaco.nome),
         espaco_sigla=espaco.sigla, tipo=_ref(tipo), nivel=tipo.nivel, resumo=item.resumo, descricao=item.descricao,

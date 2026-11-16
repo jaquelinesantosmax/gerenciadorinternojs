@@ -28,8 +28,8 @@ PERMISSOES: dict[str, frozenset[Papel]] = {
     "ver_usuarios": frozenset({ADM, GESTOR}),
     "criar_espaco_equipe": frozenset({ADM, GESTOR, CRIAR}),
     "acessar_espaco_gestao": frozenset({ADM, GESTOR}),
-    # Lista provisória de Times (decisão de 16/11), até o cadastro de Times da Etapa 4.
-    "gerenciar_times_provisorios": frozenset({ADM}),
+    # Criar time: ADM da plataforma, Gestor e quem pode criar espaços (ADM de algum espaço também; ver times.py).
+    "criar_time": frozenset({ADM, GESTOR, CRIAR}),
     "definir_limite_anexos": frozenset({ADM}),
     # Matriz: "Gerenciar campos padronizados e catálogo de status" é só do ADM da plataforma.
     "gerenciar_status_padrao": frozenset({ADM}),

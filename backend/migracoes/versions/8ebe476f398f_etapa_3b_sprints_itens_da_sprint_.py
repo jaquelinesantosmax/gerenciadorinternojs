@@ -70,35 +70,8 @@ def upgrade() -> None:
     op.add_column('itens', sa.Column('estimativa_horas', sa.Numeric(precision=8, scale=2), nullable=True))
     op.add_column('quadros', sa.Column('unidade_estimativa', sa.String(length=16), server_default='pontos', nullable=False))
     # ### end Alembic commands ###
-
-    # Histórico de status dos itens que já existiam, a partir do histórico do item (para as métricas).
-    from sqlalchemy import select
-    from sqlalchemy.orm import Session
-
-    from gerenciador.modelos_espacos import StatusItem
-    from gerenciador.modelos_itens import HistoricoItem, Item
-    from gerenciador.modelos_scrum import MudancaStatus
-
-    sessao = Session(bind=op.get_bind())
-    todos = list(sessao.scalars(select(StatusItem)))
-    for item in sessao.scalars(select(Item)).all():
-        nomes = {s.nome: s for s in todos if s.espaco_id in (None, item.espaco_id)}
-        mudancas = list(sessao.scalars(select(HistoricoItem).where(HistoricoItem.item_id == item.id,
-                                                                    HistoricoItem.campo == "Status")
-                                       .order_by(HistoricoItem.ocorrido_em)))
-        inicial = nomes.get(mudancas[0].valor_anterior) if mudancas else sessao.get(StatusItem, item.status_id)
-        if inicial is not None:
-            sessao.add(MudancaStatus(item_id=item.id, de_status_id=None, para_status_id=inicial.id,
-                                     categoria=inicial.categoria, quando=item.criado_em))
-        anterior = inicial
-        for h in mudancas:
-            novo = nomes.get((h.valor_novo or "").split(" (")[0])
-            if novo is None:
-                continue
-            sessao.add(MudancaStatus(item_id=item.id, de_status_id=anterior.id if anterior else None,
-                                     para_status_id=novo.id, categoria=novo.categoria, quando=h.ocorrido_em))
-            anterior = novo
-    sessao.flush()
+    # Os dados iniciais (status, fluxo, quadros e histórico de status) são preenchidos pelo comando
+    # "python -m gerenciador.cli preparar-dados", que roda depois das migrações (infra\ligar.ps1).
 
 
 def downgrade() -> None:

@@ -21,6 +21,8 @@ Push-Location (Join-Path $Raiz 'backend')
 try {
     $codigo = Executar-Com-Log (Join-Path $Raiz 'backend\.venv\Scripts\alembic.exe') @('upgrade', 'head') (Join-Path $Logs 'migracoes.log')
     if ($codigo -ne 0) { throw 'Falha ao atualizar o banco. Veja infra\logs\migracoes.log' }
+    $codigo = Executar-Com-Log $Python @('-m', 'gerenciador.cli', 'preparar-dados') (Join-Path $Logs 'preparar-dados.log')
+    if ($codigo -ne 0) { throw 'Falha ao preparar os dados. Veja infra\logs\preparar-dados.log' }
 } finally { Pop-Location }
 
 function Respondendo([string]$url) {

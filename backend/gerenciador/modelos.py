@@ -108,6 +108,7 @@ class EventoAuditoria(Base):
 
 # Tabelas das etapas seguintes (importadas aqui para todas ficarem registradas juntas).
 from . import (
+    modelos_acesso,  # noqa: E402, F401
     modelos_espacos,  # noqa: E402, F401
     modelos_itens,  # noqa: E402, F401
     modelos_quadros,  # noqa: E402, F401

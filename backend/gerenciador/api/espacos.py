@@ -58,6 +58,12 @@ class EspacoDetalhe(EspacoResumo):
     tipos: list[TipoSaida]
     status: list[StatusSaida]
     origens: list[Opcao]
+    aberto: bool = False
+    # Gestor: acompanha este espaço? ADM da plataforma: até quando vai o suporte?
+    acompanha: bool = False
+    suporte_ate: datetime | None = None
+    pode_acompanhar: bool = False
+    pedido_pendente: bool = False
 
 
 class PedidoEspaco(BaseModel):
@@ -106,18 +112,33 @@ def _resumo(e: Espaco, papel: str) -> EspacoResumo:
     return EspacoResumo(id=e.id, sigla=e.sigla, nome=e.nome, tipo=e.tipo, modelo=e.modelo, meu_papel=papel)
 
 
+def _extras_acesso(db: Session, usuario: Usuario, e: Espaco) -> dict:
+    from .. import acesso
+    from ..papeis import GESTOR, papeis_ativos
+
+    sessao = acesso.sessao_suporte(db, usuario, e)
+    return {
+        "aberto": e.aberto,
+        "acompanha": acesso.acompanha(db, usuario, e),
+        "suporte_ate": sessao.expira_em if sessao else None,
+        "pode_acompanhar": e.tipo == "projeto" and GESTOR in papeis_ativos(db, usuario.id),
+        "pedido_pendente": acesso.pedido_pendente(db, usuario, e) is not None,
+    }
+
+
 def _detalhe(db: Session, usuario: Usuario, e: Espaco) -> EspacoDetalhe:
     papel = svc.papel_no_espaco(db, usuario, e) or ""
     return EspacoDetalhe(
         **_resumo(e, papel).model_dump(exclude={"paineis"}),
         descricao=e.descricao,
         criado_em=e.criado_em,
-        permissoes=svc.permissoes_no_espaco(papel or None),
+        permissoes=svc.permissoes_do_usuario(db, usuario, e),
         paineis=[Opcao(id=p.id, nome=p.nome) for p in svc.listar_paineis(db, e)],
         tipos=[TipoSaida(id=t.id, nome=t.nome, nivel=t.nivel, padrao=t.espaco_id is None)
                for t in svc.listar_tipos(db, e)],
         status=[StatusSaida(id=s.id, nome=s.nome, categoria=s.categoria) for s in svc.listar_status(db, e)],
         origens=[Opcao(id=o.id, nome=o.nome) for o in svc.listar_origens(db, e)],
+        **_extras_acesso(db, usuario, e),
     )
 
 

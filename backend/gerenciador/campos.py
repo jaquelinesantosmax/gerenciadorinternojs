@@ -16,7 +16,7 @@ from . import relogio
 from .erros import ErroDeRegra, NaoEncontrado, OperacaoNegada, SemPermissao
 from .espacos import listar_tipos, pode_no_espaco
 from .modelos import Usuario
-from .modelos_espacos import Espaco, MembroEspaco
+from .modelos_espacos import Espaco
 from .modelos_itens import TIPOS_CAMPO, CampoPersonalizado
 
 MOEDAS = {"BRL": "Real", "USD": "Dólar", "EUR": "Euro", "GBP": "Libra"}
@@ -261,7 +261,9 @@ def normalizar_valor(
 def _membros_do_espaco(db: Session, espaco: Espaco) -> set[str]:
     if espaco.tipo == "pessoal":
         return {str(espaco.dono_id)}
-    return {str(u) for u in db.scalars(select(MembroEspaco.usuario_id).where(MembroEspaco.espaco_id == espaco.id))}
+    from .espacos import pessoas_com_papel
+
+    return {str(u) for u in pessoas_com_papel(db, espaco, {"adm", "membro", "leitor"})}
 
 
 def campos_do_tipo(db: Session, espaco: Espaco, tipo_id: uuid.UUID) -> list[CampoPersonalizado]:

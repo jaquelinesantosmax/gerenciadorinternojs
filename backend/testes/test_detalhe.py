@@ -223,7 +223,8 @@ def test_item_de_espaco_sem_acesso_aparece_restrito(cenario, cliente_adm):
     visto_pelo_membro = c["membro"].get(f"/api/itens/{a['chave']}").json()["vinculos"]
     assert visto_pelo_membro == [{
         "id": visto_pelo_membro[0]["id"], "tipo": "relacionado", "rotulo": "relacionado a", "chave": "FIN-1",
-        "acesso_restrito": True, "resumo": None, "status": None, "status_categoria": None, "bloqueio_aberto": False}]
+        "acesso_restrito": True, "resumo": None, "status": None, "status_categoria": None, "bloqueio_aberto": False,
+        "pedido_pendente": False}]
     # E ele não consegue criar vínculo com item que não vê.
     assert _vincular(c["membro"], a["chave"], "relacionado", "FIN-1").status_code == 404
 

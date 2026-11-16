@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -29,6 +29,8 @@ class TimeProvisorio(Base):
     nome: Mapped[str] = mapped_column(String(120), unique=True)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True)
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    # Quem criou o time pode editá-lo (além do Gestor e do ADM da plataforma). Vazio nos times da lista provisória.
+    criado_por_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("usuarios.id"))
 
 
 class Espaco(Base):
@@ -45,6 +47,8 @@ class Espaco(Base):
     dono_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("usuarios.id"))
     criado_por_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("usuarios.id"))
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    # Espaço aberto: leitura, comentários e anexos para toda a empresa (marcado pelo ADM do espaço).
+    aberto: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
     # Próximo número para a chave dos itens (LOP-1, LOP-2...).
     proximo_numero: Mapped[int] = mapped_column(Integer, default=1)
 

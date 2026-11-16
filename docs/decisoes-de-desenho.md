@@ -65,6 +65,10 @@ A versão oficial, célula a célula, está em matriz-de-permissoes.md. Resumo:
 - Espaço pessoal: qualquer usuário cria; estrutura simplificada como o quadro "Processos e projetos", com os mesmos campos obrigatórios; compartilhamento sempre só leitura; fora do alcance do Gestor e do suporte do ADM da plataforma.
 - Solicitar acesso: o pedido vai aos ADMs do espaço, que aprovam escolhendo o papel, sem papel pré-selecionado.
 - O ADM da plataforma entra em qualquer espaço de equipe para suporte, com registro na auditoria.
+- Decidido em 16/11: o Gestor abre qualquer espaço de equipe; o botão "Acompanhar" marca os espaços que vão para o Espaço da Gestão, e é essa lista que o ADM do espaço vê.
+- Decidido em 16/11: no suporte, o ADM da plataforma informa o motivo e ganha poderes de ADM do espaço por 4 horas; a entrada, o motivo e o que ele fizer ficam na auditoria.
+- Decidido em 16/11: se a pessoa está no espaço individualmente e por um time, vale o papel com mais poder (ADM > Membro > Leitor).
+- Decidido em 16/11: a lista provisória de Times vira o cadastro de Times, com membros; o campo Time dos itens usa esse cadastro.
 
 ## Estrutura: espaços, quadros, itens e campos
 

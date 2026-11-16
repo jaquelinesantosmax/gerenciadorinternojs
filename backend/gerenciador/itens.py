@@ -24,7 +24,7 @@ from .auditoria import TipoEvento, registrar
 from .erros import ErroDeRegra, NaoEncontrado, OperacaoNegada, SemPermissao
 from .espacos import listar_paineis, listar_status, listar_tipos, pode_no_espaco
 from .modelos import Usuario
-from .modelos_espacos import Espaco, MembroEspaco, OpcaoOrigem, Painel, StatusItem, TimeProvisorio, TipoItem
+from .modelos_espacos import Espaco, OpcaoOrigem, Painel, StatusItem, TimeProvisorio, TipoItem
 from .modelos_itens import PRIORIDADES, Anexo, ApelidoItem, CoResponsavel, HistoricoItem, Item
 
 _CHAVE = re.compile(r"^([A-Za-z]{2,10})-(\d{1,9})$")
@@ -128,16 +128,12 @@ def categorias_do_espaco(db: Session, espaco: Espaco) -> list[str]:
 # --- Conferência dos campos -------------------------------------------------------------------
 
 def _pode_ser_responsavel(db: Session, espaco: Espaco) -> set[uuid.UUID]:
-    """Responsável e co-responsáveis precisam poder editar itens: ADM ou Membro (ou o dono, no pessoal)."""
+    """Responsável e co-responsáveis precisam poder editar itens: ADM ou Membro (direto ou por time), ou o dono no pessoal."""
+    from .espacos import pessoas_com_papel
+
     if espaco.tipo == "pessoal":
         return {espaco.dono_id} if espaco.dono_id else set()
-    return set(
-        db.scalars(
-            select(MembroEspaco.usuario_id)
-            .join(Usuario, Usuario.id == MembroEspaco.usuario_id)
-            .where(MembroEspaco.espaco_id == espaco.id, MembroEspaco.papel.in_(("adm", "membro")), Usuario.ativo)
-        )
-    )
+    return pessoas_com_papel(db, espaco, {"adm", "membro"})
 
 
 def _uuid(valor: Any, rotulo: str) -> uuid.UUID | None:

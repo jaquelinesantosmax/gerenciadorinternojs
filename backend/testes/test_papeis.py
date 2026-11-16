@@ -68,11 +68,11 @@ def test_matriz_da_plataforma():
         "ver_usuarios": True,
         "criar_espaco_equipe": True,
         "acessar_espaco_gestao": True,
-        "gerenciar_times_provisorios": False,
+        "criar_time": True,
         "definir_limite_anexos": False,
         "gerenciar_status_padrao": False,
     }
-    assert [k for k, v in criar.items() if v] == ["criar_espaco_equipe"]
+    assert [k for k, v in criar.items() if v] == ["criar_espaco_equipe", "criar_time"]
     assert not any(comum.values())
     assert set(permissoes_de({Papel.ADM_PLATAFORMA})) == set(PERMISSOES)
 
@@ -179,3 +179,21 @@ def test_papel_volta_a_valer_quando_concedido_de_novo(novo_cliente, cliente_adm)
     _revogar(cliente_adm, pid, "criar_espacos")
     assert _conceder(cliente_adm, pid, "criar_espacos").status_code == 204
     assert pessoa.get("/api/eu").json()["papeis"] == ["criar_espacos"]
+
+
+def test_preparar_dados_completa_o_que_falta_e_pode_repetir(cliente_adm, db):
+    from conftest import criar_projeto
+    from sqlalchemy import delete
+
+    from gerenciador.modelos_quadros import Quadro, StatusDoEspaco, Transicao
+    from gerenciador.preparar_dados import preparar
+
+    criar_projeto(cliente_adm)
+    # Simula um espaço antigo, de antes da Etapa 3a.
+    db.execute(delete(Quadro))
+    db.execute(delete(Transicao))
+    db.execute(delete(StatusDoEspaco))
+    db.commit()
+    assert preparar(db)["espacos"] == 1
+    assert preparar(db) == {"espacos": 0, "paineis": 0, "itens": 0}
+    assert len(cliente_adm.get("/api/espacos/LOP/workflow").json()["ligados"]) == 8
