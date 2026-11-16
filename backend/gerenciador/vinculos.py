@@ -149,6 +149,19 @@ def listar(db: Session, viewer: Usuario, item: Item) -> list[VinculoVisto]:
     return vistos
 
 
+def chaves_que_bloqueiam(db: Session, item: Item) -> list[str]:
+    """Chaves dos itens ainda não concluídos que bloqueiam este (a chave aparece mesmo sem acesso ao outro espaço)."""
+    from .itens import chave
+
+    linhas = db.execute(
+        select(Item, Espaco).join(Vinculo, Vinculo.origem_id == Item.id).join(Espaco, Espaco.id == Item.espaco_id)
+        .join(StatusItem, StatusItem.id == Item.status_id)
+        .where(Vinculo.tipo == "bloqueia", Vinculo.destino_id == item.id, Item.excluido_em.is_(None),
+               StatusItem.categoria != "concluido")
+    ).all()
+    return sorted(chave(e, i) for i, e in linhas)
+
+
 def bloqueios_abertos(db: Session, viewer: Usuario, item: Item) -> list[str]:
     """Chaves dos itens que ainda bloqueiam este (usado para o alerta ao concluir, na Etapa 3)."""
     return [v.chave for v in listar(db, viewer, item) if v.bloqueio_aberto]

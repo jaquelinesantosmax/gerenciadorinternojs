@@ -1,12 +1,14 @@
 "use client";
 
-import { IconPlus, IconSearch, IconSettings } from "@tabler/icons-react";
+import { IconLayoutKanban, IconList, IconLock, IconPlus, IconSearch, IconSettings, IconTimeline } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { EtiquetaPrioridade, EtiquetaStatus } from "@/components/EtiquetaStatus";
 import { FormularioItem } from "@/components/FormularioItem";
-import { api, ErroApi, type EspacoDetalhe, type ItemLinha, type OpcoesItem } from "@/lib/api";
+import { Gantt } from "@/components/Gantt";
+import { QuadroKanban } from "@/components/QuadroKanban";
+import { api, ErroApi, type EspacoDetalhe, type ItemLinha, type OpcoesItem, type QuadroResumo } from "@/lib/api";
 import { formatarData } from "@/lib/formato";
 import { MODELOS, NOME_PAPEL_ESPACO } from "@/lib/textos";
 
@@ -20,6 +22,39 @@ export function VisaoEspaco({ sigla, painelId }: { sigla: string; painelId?: str
   useEffect(() => setFiltros((f) => ({ ...f, painel_id: painelId ?? "" })), [painelId]);
   const [erro, setErro] = useState<string | null>(null);
   const [criando, setCriando] = useState(false);
+  const [soBloqueados, setSoBloqueados] = useState(false);
+  const [quadros, setQuadros] = useState<QuadroResumo[]>([]);
+  const [quadroId, setQuadroId] = useState<string | null>(null);
+  // A aba escolhida fica lembrada neste navegador, por espaço.
+  const chaveAba = `gerenciador:aba:${sigla}`;
+  const [aba, setAba] = useState<"lista" | "quadro" | "gantt">("quadro");
+  useEffect(() => {
+    try {
+      const salva = localStorage.getItem(chaveAba);
+      if (salva === "lista" || salva === "quadro" || salva === "gantt") setAba(salva);
+    } catch {
+      /* navegador sem armazenamento: fica no padrão */
+    }
+  }, [chaveAba]);
+  const mudarAba = (valor: "lista" | "quadro" | "gantt") => {
+    setAba(valor);
+    try {
+      localStorage.setItem(chaveAba, valor);
+    } catch {
+      /* ignora */
+    }
+  };
+  const quadrosDoEspaco = quadros.filter((q) => q.painel_id === null);
+  useEffect(() => {
+    api
+      .quadros(sigla)
+      .then((lista) => {
+        setQuadros(lista);
+        const doPainel = painelId ? lista.find((q) => q.painel_id === painelId) : lista.find((q) => q.painel_id === null);
+        setQuadroId(doPainel?.id ?? null);
+      })
+      .catch(() => setQuadros([]));
+  }, [sigla, painelId]);
 
   useEffect(() => {
     setEspaco(null);
@@ -92,7 +127,43 @@ export function VisaoEspaco({ sigla, painelId }: { sigla: string; painelId?: str
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16, alignItems: "flex-end" }}>
+      <div role="tablist" aria-label="Visualização" style={{ display: "flex", gap: 4, marginTop: 14, alignItems: "center", flexWrap: "wrap" }}>
+        {(
+          [
+            ["lista", "Lista", <IconList key="l" size={15} stroke={1.5} />],
+            ["quadro", "Quadro", <IconLayoutKanban key="k" size={15} stroke={1.5} />],
+            ["gantt", "Gantt", <IconTimeline key="g" size={15} stroke={1.5} />],
+          ] as const
+        ).map(([valor, nome, icone]) => (
+          <button key={valor} role="tab" aria-selected={aba === valor} className={`aba-visao${aba === valor ? " ativa" : ""}`} onClick={() => mudarAba(valor)}>
+            {icone} {nome}
+          </button>
+        ))}
+        {aba === "quadro" && !painel && quadrosDoEspaco.length > 1 && (
+          <select className="campo" aria-label="Quadro" style={{ width: "auto", height: 30, marginLeft: 8 }} value={quadroId ?? ""} onChange={(e) => setQuadroId(e.target.value)}>
+            {quadrosDoEspaco.map((q) => (
+              <option key={q.id} value={q.id}>
+                {q.nome}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {aba === "quadro" && (
+        <div style={{ marginTop: 12 }}>
+          {quadroId ? <QuadroKanban key={quadroId} quadroId={quadroId} podeMover={espaco.permissoes.editar_itens} /> : <p className="legenda">Carregando quadro…</p>}
+        </div>
+      )}
+      {aba === "gantt" && (
+        <div style={{ marginTop: 12 }}>
+          <Gantt sigla={espaco.sigla} painelId={painelId} />
+        </div>
+      )}
+
+      {aba === "lista" && (
+      <>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12, alignItems: "flex-end" }}>
         <div style={{ position: "relative", flex: "1 1 220px", maxWidth: 320 }}>
           <label className="rotulo" htmlFor="filtro-busca">
             Buscar
@@ -103,6 +174,10 @@ export function VisaoEspaco({ sigla, painelId }: { sigla: string; painelId?: str
         {filtro("tipo_id", "Tipo", espaco.tipos)}
         {filtro("status_id", "Status", espaco.status)}
         {espaco.paineis.length > 0 && !painel && filtro("painel_id", "Painel", espaco.paineis)}
+        <label style={{ display: "flex", gap: 6, alignItems: "center", height: 36 }}>
+          <input type="checkbox" checked={soBloqueados} onChange={(e) => setSoBloqueados(e.target.checked)} />
+          Só bloqueados
+        </label>
       </div>
 
       <div className="painel" style={{ marginTop: 14, padding: "4px 8px", overflowX: "auto" }}>
@@ -126,10 +201,11 @@ export function VisaoEspaco({ sigla, painelId }: { sigla: string; painelId?: str
                 <th style={{ width: 150 }}>Responsável</th>
                 <th style={{ width: 96 }}>Entrega</th>
                 {espaco.paineis.length > 0 && <th style={{ width: 130 }}>Painel</th>}
+                <th style={{ width: 130 }}>Bloqueado por</th>
               </tr>
             </thead>
             <tbody>
-              {itens.map((i) => (
+              {itens.filter((i) => !soBloqueados || i.bloqueado_por.length > 0).map((i) => (
                 <tr key={i.id} className="clicavel" tabIndex={0} onClick={() => router.push(`/itens/${i.chave}`)} onKeyDown={(e) => e.key === "Enter" && router.push(`/itens/${i.chave}`)}>
                   <td className="legenda" style={{ fontWeight: 400 }}>
                     {i.chave}
@@ -147,12 +223,28 @@ export function VisaoEspaco({ sigla, painelId }: { sigla: string; painelId?: str
                     {formatarData(`${i.data_entrega}T12:00:00Z`)}
                   </td>
                   {espaco.paineis.length > 0 && <td className="legenda">{i.painel?.nome ?? "—"}</td>}
+                  <td>
+                    {i.bloqueado_por.length ? (
+                      <span className="etiqueta etiqueta-alerta" style={{ whiteSpace: "normal" }}>
+                        <IconLock size={12} stroke={1.5} /> {i.bloqueado_por.join(", ")}
+                      </span>
+                    ) : (
+                      <span className="legenda">—</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
+      </>
+      )}
+      <style>{`
+        .aba-visao{display:inline-flex;gap:6px;align-items:center;border:none;background:none;font-size:13px;color:var(--texto-2);padding:6px 12px;border-radius:20px;cursor:pointer}
+        .aba-visao:hover{background:#fff}
+        .aba-visao.ativa{background:var(--verde-fundo);color:var(--verde-escuro);font-weight:500}
+      `}</style>
 
       {criando && opcoes && (
         <div className="fundo-janela" onMouseDown={(e) => e.target === e.currentTarget && setCriando(false)}>

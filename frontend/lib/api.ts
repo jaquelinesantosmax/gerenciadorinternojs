@@ -14,7 +14,8 @@ export type Permissao =
   | "criar_espaco_equipe"
   | "acessar_espaco_gestao"
   | "gerenciar_times_provisorios"
-  | "definir_limite_anexos";
+  | "definir_limite_anexos"
+  | "gerenciar_status_padrao";
 
 export interface Pessoa {
   id: string;
@@ -162,7 +163,79 @@ export interface ItemLinha {
   responsavel: Pessoa | null;
   data_entrega: string;
   painel: Ref | null;
+  bloqueado_por: string[];
 }
+
+// --- Etapa 3a ---
+export interface StatusWorkflow {
+  id: string;
+  nome: string;
+  categoria: "a_fazer" | "em_andamento" | "concluido";
+  proprio: boolean;
+  itens: number;
+}
+export interface Workflow {
+  ligados: StatusWorkflow[];
+  disponiveis: StatusWorkflow[];
+  transicoes: [string, string][];
+}
+export interface QuadroResumo {
+  id: string;
+  nome: string;
+  tipo: "kanban" | "simples" | "scrum";
+  painel_id: string | null;
+  usa_backlog: boolean;
+}
+export interface Card {
+  chave: string;
+  resumo: string;
+  tipo: string;
+  nivel: string;
+  prioridade: string;
+  responsavel: Pessoa | null;
+  status_id: string;
+  status: string;
+  status_categoria: string;
+  data_entrega: string;
+  atrasado: boolean;
+  bloqueado: boolean;
+  painel: string | null;
+}
+export interface Coluna {
+  id: string;
+  nome: string;
+  limite: number | null;
+  status: StatusWorkflow[];
+  cards: Card[];
+  acima_do_limite: boolean;
+}
+export interface QuadroDetalhe extends QuadroResumo {
+  colunas: Coluna[];
+  backlog: Card[];
+  sem_coluna: Card[];
+  destinos: Record<string, string[]>;
+}
+export interface BarraGantt {
+  chave: string;
+  resumo: string;
+  tipo: string;
+  nivel: string;
+  pai: string | null;
+  inicio: string;
+  entrega: string;
+  entrega_real: string | null;
+  status: string;
+  status_categoria: string;
+  responsavel: string | null;
+  painel_id: string | null;
+}
+export interface StatusCatalogo {
+  id: string;
+  nome: string;
+  categoria: string;
+  espaco: string | null;
+}
+
 export interface ItemCurto {
   chave: string;
   resumo: string;
@@ -399,6 +472,32 @@ export const api = {
   vincular: (chave: string, dados: { tipo: string; sentido: string; chave: string; confirmar_ciclo?: boolean }) =>
     pedir<Vinculo[]>(`/api/itens/${chave}/vinculos`, { method: "POST", body: json(dados) }),
   desvincular: (chave: string, id: string) => pedir<void>(`/api/itens/${chave}/vinculos/${id}`, { method: "DELETE" }),
+
+  // --- Etapa 3a ---
+  workflow: (sigla: string) => pedir<Workflow>(`/api/espacos/${sigla}/workflow`),
+  criarStatus: (sigla: string, nome: string, categoria: string, confirmar = false) =>
+    pedir<Workflow>(`/api/espacos/${sigla}/status`, { method: "POST", body: json({ nome, categoria, confirmar }) }),
+  renomearStatus: (sigla: string, id: string, nome: string, confirmar = false) =>
+    pedir<Workflow>(`/api/espacos/${sigla}/status/${id}`, { method: "PATCH", body: json({ nome, confirmar }) }),
+  ligarStatus: (sigla: string, id: string) => pedir<Workflow>(`/api/espacos/${sigla}/status/${id}/ligar`, { method: "POST" }),
+  desligarStatus: (sigla: string, id: string) => pedir<Workflow>(`/api/espacos/${sigla}/status/${id}`, { method: "DELETE" }),
+  definirTransicoes: (sigla: string, pares: [string, string][]) =>
+    pedir<Workflow>(`/api/espacos/${sigla}/transicoes`, { method: "PUT", body: json({ pares }) }),
+  quadros: (sigla: string) => pedir<QuadroResumo[]>(`/api/espacos/${sigla}/quadros`),
+  criarQuadro: (sigla: string, nome: string, tipo: string) =>
+    pedir<QuadroResumo>(`/api/espacos/${sigla}/quadros`, { method: "POST", body: json({ nome, tipo }) }),
+  quadro: (id: string) => pedir<QuadroDetalhe>(`/api/quadros/${id}`),
+  alterarQuadro: (id: string, dados: { nome?: string; usa_backlog?: boolean }) =>
+    pedir<QuadroResumo>(`/api/quadros/${id}`, { method: "PATCH", body: json(dados) }),
+  definirColunas: (id: string, colunas: { nome: string; limite: number | null; status_ids: string[] }[]) =>
+    pedir<void>(`/api/quadros/${id}/colunas`, { method: "PUT", body: json({ colunas }) }),
+  excluirQuadro: (id: string) => pedir<void>(`/api/quadros/${id}`, { method: "DELETE" }),
+  gantt: (sigla: string, painelId?: string) =>
+    pedir<{ barras: BarraGantt[]; bloqueios: [string, string][] }>(`/api/espacos/${sigla}/gantt${painelId ? `?painel_id=${painelId}` : ""}`),
+  catalogoStatus: () => pedir<StatusCatalogo[]>("/api/admin/status"),
+  criarStatusPadrao: (nome: string, categoria: string, confirmar = false) =>
+    pedir<StatusCatalogo[]>("/api/admin/status", { method: "POST", body: json({ nome, categoria, confirmar }) }),
+  promoverStatus: (id: string) => pedir<StatusCatalogo[]>(`/api/admin/status/${id}/promover`, { method: "POST" }),
 
   dominios: () => pedir<Dominio[]>("/api/admin/dominios"),
   adicionarDominio: (dominio: string) =>

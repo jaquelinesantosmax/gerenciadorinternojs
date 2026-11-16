@@ -239,3 +239,12 @@ def test_gantt_com_barras_hierarquia_e_setas_de_bloqueio(cenario):
     assert [b_["chave"] for b_ in gantt["barras"]] == ["LOP-1", "LOP-2", "LOP-3"]
     assert gantt["barras"][1]["pai"] == "LOP-1"
     assert gantt["bloqueios"] == [["LOP-2", "LOP-3"]]
+
+
+def test_lista_mostra_quem_bloqueia(cenario):
+    c = cenario
+    a, b = criar_item(c["adm"], c), criar_item(c["adm"], c)
+    c["adm"].post(f"/api/itens/{a['chave']}/vinculos", json={"tipo": "bloqueia", "chave": b["chave"]})
+    linhas = {x["chave"]: x for x in c["adm"].get("/api/espacos/LOP/itens").json()}
+    assert linhas[b["chave"]]["bloqueado_por"] == [a["chave"]]
+    assert linhas[a["chave"]]["bloqueado_por"] == []

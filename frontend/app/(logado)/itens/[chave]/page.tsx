@@ -34,6 +34,7 @@ export default function PaginaItem() {
   const [clonando, setClonando] = useState<{ copiar_comentarios: boolean; copiar_anexos: boolean } | null>(null);
   const [ocupado, setOcupado] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
+  const [transicoes, setTransicoes] = useState<[string, string][] | null>(null);
 
   const recarregar = useCallback(async () => {
     try {
@@ -54,6 +55,7 @@ export default function PaginaItem() {
       if (!atual) return;
       api.espaco(atual.espaco_sigla).then(setEspaco).catch(() => undefined);
       api.opcoesItem(atual.espaco_sigla).then(setOpcoes).catch(() => undefined);
+      api.workflow(atual.espaco_sigla).then((w) => setTransicoes(w.transicoes)).catch(() => undefined);
     });
   }, [recarregar]);
 
@@ -141,11 +143,14 @@ export default function PaginaItem() {
               value={item.status.id}
               onChange={(e) => void salvar({ status_id: e.target.value }).catch((f) => setMensagem(f instanceof ErroApi ? f.message : "Não foi possível mudar o status."))}
             >
-              {espaco.status.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.nome}
-                </option>
-              ))}
+              {/* Só os status para onde o fluxo deixa o item ir a partir do atual. */}
+              {espaco.status
+                .filter((s) => s.id === item.status.id || !transicoes || transicoes.some(([de, para]) => de === item.status.id && para === s.id))
+                .map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.nome}
+                  </option>
+                ))}
             </select>
           ) : (
             <div style={{ marginTop: 4 }}>

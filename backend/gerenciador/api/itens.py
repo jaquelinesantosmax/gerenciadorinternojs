@@ -51,6 +51,8 @@ class ItemLinha(BaseModel):
     responsavel: PessoaResumo | None
     data_entrega: date
     painel: Ref | None
+    # Vínculos aparecem como coluna e filtro na Lista (docs/decisoes-de-desenho.md).
+    bloqueado_por: list[str] = []
 
 
 class ItemCurto(BaseModel):
@@ -218,6 +220,7 @@ def _linha(db: Session, espaco: Espaco, item: Item) -> ItemLinha:
         status=StatusRef(id=status.id, nome=status.nome, categoria=status.categoria), prioridade=item.prioridade,
         responsavel=_pessoa(db, item.responsavel_id), data_entrega=item.data_entrega,
         painel=_ref(db.get(Painel, item.painel_id)) if item.painel_id else None,
+        bloqueado_por=vinculos_svc.chaves_que_bloqueiam(db, item) if status.categoria != "concluido" else [],
     )
 
 

@@ -9,6 +9,8 @@ import { Dialogo } from "@/components/Dialogo";
 import { useEu } from "@/components/Moldura";
 import { api, ErroApi, type Campo, type EspacoDetalhe, type Membro, type OpcoesItem, type Pessoa } from "@/lib/api";
 import { DESCRICAO_PAPEL_ESPACO, NOME_PAPEL_ESPACO } from "@/lib/textos";
+import { ConfigQuadros } from "./ConfigQuadros";
+import { ConfigWorkflow } from "./ConfigWorkflow";
 import { EditorCampo, NOMES_TIPO } from "./EditorCampo";
 
 const msg = (f: unknown, padrao: string) => (f instanceof ErroApi ? f.message : padrao);
@@ -265,6 +267,7 @@ export default function ConfiguracoesEspaco() {
   const [campoAberto, setCampoAberto] = useState<Campo | "novo" | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [versaoWorkflow, setVersaoWorkflow] = useState(0);
 
   const carregar = useCallback(async () => {
     try {
@@ -374,6 +377,20 @@ export default function ConfiguracoesEspaco() {
 
       {espaco.permissoes.configurar && (
         <>
+          <Secao titulo="Status e fluxo" descricao="Quais status valem neste espaço e por onde os itens podem passar. Todo espaço nasce com os 8 status padrão e o fluxo padrão.">
+            <ConfigWorkflow
+              sigla={sigla}
+              aoMudar={() => {
+                setVersaoWorkflow((v) => v + 1);
+                void recarregarEspaco();
+              }}
+            />
+          </Secao>
+
+          <Secao titulo="Quadros" descricao="Colunas de cada quadro. Uma coluna pode juntar vários status. O limite de itens gera alerta quando passa, sem impedir.">
+            <ConfigQuadros sigla={sigla} versao={versaoWorkflow} />
+          </Secao>
+
           <Secao titulo="Tipos de item" descricao="Épico, História, Tarefa, Bug e Subtarefa são da plataforma. Tipos próprios ficam no nível de História e Tarefa.">
             <ListaNomes
               itens={espaco.tipos.map((t) => ({ id: t.id, nome: t.nome, fixo: t.padrao }))}

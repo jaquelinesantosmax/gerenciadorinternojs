@@ -11,6 +11,14 @@ if (Test-Path $ArquivoProcessos) {
     }
     Remove-Item $ArquivoProcessos
 }
+# Garantia: encerra qualquer programa que tenha ficado preso nas portas do sistema (ex.: um servidor antigo).
+$cfg = Obter-Config
+foreach ($porta in $cfg.BACKEND_PORTA, $cfg.FRONTEND_PORTA) {
+    $donos = Get-NetTCPConnection -LocalPort ([int]$porta) -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique
+    foreach ($pid_ in $donos) {
+        Executar-Com-Log 'taskkill.exe' @('/PID', [string]$pid_, '/T', '/F') (Join-Path $Logs 'desligar.log') | Out-Null
+    }
+}
 Parar-Banco
 Escrever-Passo 'Desligado: banco de dados'
 Write-Host 'Pronto.' -ForegroundColor Green

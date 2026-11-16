@@ -58,5 +58,7 @@ A ordem completa está em `docs/decisoes-de-desenho.md`, seção "Ordem de const
 
 - Etapa 1 – Fundação: entregue em 16/11 (login de teste, cadastro automático, sessão, papéis da plataforma e auditoria).
 - Etapa 2 – Espaços e itens: entregue em 16/11 para validação da Jaqueline (espaços de projeto e pessoais, membros, painéis, tipos, campos padronizados e personalizados, itens, detalhe do item, comentários, anexos e itens relacionados).
+- Etapa 3a – Status, workflow e quadros: entregue em 16/11 para validação (status por espaço, status próprios com aviso de nome parecido, fluxo de transições, quadros Kanban e simples com colunas e limite, quadro por painel, abas Lista, Quadro e Gantt). Próxima: Etapa 3b (Scrum e métricas do Kanban).
+- O servidor roda sem recarga automática (no Windows ela travava). Depois de mudar código do servidor, rode infra\desligar.cmd e infra\ligar.cmd.
 - Ficou para depois, de propósito: mover item entre espaços (a tabela de apelidos já existe), botão Solicitar acesso (Etapa 4), Observar item (Etapa 8) e compartilhamento do espaço pessoal (Etapa 4).
 - Ao registrar uma decisão nova em `docs/decisoes-de-desenho.md`, atualize também as duas cópias no OneDrive da Jaqueline, se elas não tiverem mudado por lá.
