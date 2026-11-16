@@ -43,6 +43,10 @@ Design System Jusbrasil: fonte Inter; títulos H1 22px Semibold #007A5F, H2 18px
 - Sessão de 15 dias, guardada em cookie protegido; todo login, falha e logout vai para a auditoria.
 - Sem sincronização com o diretório do Google por enquanto. Para cobrir desligamentos, o ADM da plataforma pode desativar um usuário e encerrar todas as sessões dele na hora.
 - O primeiro ADM da plataforma é cadastrado manualmente na instalação.
+- Decidido em 16/11: depois da instalação, só um ADM da plataforma pode dar ou tirar o papel de ADM da plataforma, com registro na auditoria; a plataforma nunca fica sem ADM.
+- Decidido em 16/11: a sessão de 15 dias renova a cada uso e só cai depois de 15 dias seguidos sem uso.
+- Decidido em 16/11: o ADM da plataforma pode reativar um usuário desativado; a pessoa volta com os mesmos papéis e acessos, com registro na auditoria.
+- Decidido em 16/11: quem entra sem acesso a nenhum espaço vê o aviso "Você ainda não tem acesso a nenhum espaço. Peça acesso ao ADM do espaço em que vai trabalhar.", com o botão Criar espaço pessoal (a partir da Etapa 2).
 - Dependência externa: credenciais OAuth criadas no Google Cloud da empresa, com endereços de retorno por ambiente. Até lá, o desenvolvimento usa um login de teste.
 
 ## Permissões

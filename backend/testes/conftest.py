@@ -1,0 +1,146 @@
+"""Preparação dos testes. Usam o banco gerenciador_teste, recriado do zero a cada rodada.
+
+Antes de rodar: infra\\ligar-banco.ps1 (liga o banco). Depois: .venv\\Scripts\\python -m pytest
+"""
+
+import os
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+
+RAIZ = Path(__file__).resolve().parents[2]
+
+
+def _ler_env() -> dict[str, str]:
+    arquivo = RAIZ / "infra" / ".env"
+    if not arquivo.exists():
+        raise RuntimeError("Configuração local não encontrada. Rode infra\\ligar-banco.ps1 antes dos testes.")
+    cfg = {}
+    for linha in arquivo.read_text(encoding="utf-8", errors="replace").splitlines():
+        if "=" in linha and not linha.lstrip().startswith("#"):
+            chave, valor = linha.split("=", 1)
+            cfg[chave.strip()] = valor.strip()
+    return cfg
+
+
+_cfg = _ler_env()
+os.environ["GERENCIADOR_DATABASE_URL"] = (
+    f"postgresql+psycopg://{_cfg['PG_USUARIO']}:{_cfg['PG_SENHA']}@localhost:{_cfg['PG_PORTA']}/gerenciador_teste"
+)
+os.environ["GERENCIADOR_LOGIN_TESTE_HABILITADO"] = "true"
+os.environ["GERENCIADOR_AMBIENTE"] = "desenvolvimento"
+
+import pytest  # noqa: E402
+from alembic import command  # noqa: E402
+from alembic.config import Config as ConfigAlembic  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
+from sqlalchemy import text  # noqa: E402
+
+from gerenciador import relogio  # noqa: E402
+from gerenciador.banco import nova_sessao, obter_engine  # noqa: E402
+from gerenciador.papeis import cadastrar_adm_instalacao  # noqa: E402
+from gerenciador.principal import criar_app  # noqa: E402
+
+TABELAS = ["eventos_auditoria", "sessoes", "concessoes_papel", "dominios_autorizados", "usuarios"]
+
+
+@pytest.fixture(scope="session", autouse=True)
+def esquema():
+    """Recria o banco de teste aplicando as migrações reais, para testar as migrações também."""
+    with obter_engine().begin() as conexao:
+        conexao.execute(text("DROP SCHEMA public CASCADE"))
+        conexao.execute(text("CREATE SCHEMA public"))
+    cfg = ConfigAlembic(str(RAIZ / "backend" / "alembic.ini"))
+    cfg.set_main_option("script_location", str(RAIZ / "backend" / "migracoes"))
+    command.upgrade(cfg, "head")
+    yield
+
+
+@pytest.fixture(autouse=True)
+def limpar():
+    with obter_engine().begin() as conexao:
+        conexao.execute(text(f"TRUNCATE {', '.join(TABELAS)} RESTART IDENTITY CASCADE"))
+        conexao.execute(
+            text(
+                "INSERT INTO dominios_autorizados (dominio, adicionado_em) VALUES "
+                "('jusbrasil.com.br', now()), ('digesto.com.br', now())"
+            )
+        )
+    yield
+
+
+@pytest.fixture
+def db():
+    sessao = nova_sessao()
+    yield sessao
+    sessao.close()
+
+
+@pytest.fixture
+def app():
+    return criar_app()
+
+
+@pytest.fixture
+def novo_cliente(app):
+    """Cria navegadores independentes (cada um com seus próprios cookies)."""
+    abertos = []
+
+    def criar() -> TestClient:
+        cliente = TestClient(app, headers={"X-Gerenciador": "1"})
+        abertos.append(cliente)
+        return cliente
+
+    yield criar
+    for cliente in abertos:
+        cliente.close()
+
+
+@pytest.fixture
+def cliente(novo_cliente):
+    return novo_cliente()
+
+
+def entrar(cliente: TestClient, email: str, nome: str = "Pessoa Teste") -> dict:
+    resposta = cliente.post("/api/auth/teste/entrar", json={"email": email, "nome": nome})
+    assert resposta.status_code == 200, resposta.text
+    return resposta.json()
+
+
+@pytest.fixture
+def adm(db):
+    """ADM da plataforma cadastrado como na instalação."""
+    return cadastrar_adm_instalacao(db, "ana.adm@jusbrasil.com.br", "Ana Adm")
+
+
+@pytest.fixture
+def cliente_adm(novo_cliente, adm):
+    c = novo_cliente()
+    entrar(c, adm.email)
+    return c
+
+
+class RelogioFalso:
+    def __init__(self):
+        self.atual = datetime(2026, 11, 16, 12, 0, tzinfo=UTC)
+
+    def avancar(self, **intervalo) -> None:
+        self.atual += timedelta(**intervalo)
+
+
+@pytest.fixture
+def relogio_falso(monkeypatch):
+    falso = RelogioFalso()
+    monkeypatch.setattr(relogio, "agora", lambda: falso.atual)
+    return falso
+
+
+def eventos(db, tipo: str | None = None) -> list:
+    from sqlalchemy import select
+
+    from gerenciador.modelos import EventoAuditoria
+
+    consulta = select(EventoAuditoria).order_by(EventoAuditoria.id)
+    if tipo:
+        consulta = consulta.where(EventoAuditoria.tipo == tipo)
+    db.expire_all()
+    return list(db.scalars(consulta).unique())

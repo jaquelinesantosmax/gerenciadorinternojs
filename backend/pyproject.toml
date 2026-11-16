@@ -1,0 +1,22 @@
+[project]
+name = "gerenciador"
+version = "0.1.0"
+description = "Backend do Gerenciador de projetos, tarefas e service desk"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["testes"]
+pythonpath = ["."]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["migracoes/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.ruff.lint.flake8-bugbear]
+# Depends e Query nos parâmetros são o jeito padrão do FastAPI.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
