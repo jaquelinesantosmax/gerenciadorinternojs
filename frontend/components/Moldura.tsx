@@ -1,9 +1,13 @@
 "use client";
 
 import {
+  IconFolder,
   IconHistory,
   IconHome,
   IconLogout,
+  IconPlus,
+  IconSettings,
+  IconUser,
   IconUsers,
   IconUserStar,
   IconWorldWww,
@@ -11,7 +15,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { api, type Eu, type Permissao } from "@/lib/api";
+import { api, type EspacoResumo, type Eu, type Permissao } from "@/lib/api";
 import { Avatar } from "./Avatar";
 
 const ContextoEu = createContext<{ eu: Eu; recarregar: () => Promise<void> } | null>(null);
@@ -34,6 +38,7 @@ const ITENS_ADMIN: ItemMenu[] = [
   { href: "/admin/gestores", texto: "Gestores", icone: <IconUserStar size={16} stroke={1.5} />, permissao: "ver_usuarios" },
   { href: "/admin/auditoria", texto: "Auditoria", icone: <IconHistory size={16} stroke={1.5} />, permissao: "ver_auditoria" },
   { href: "/admin/dominios", texto: "Domínios", icone: <IconWorldWww size={16} stroke={1.5} />, permissao: "configurar_dominios" },
+  { href: "/admin/plataforma", texto: "Plataforma", icone: <IconSettings size={16} stroke={1.5} />, permissao: "gerenciar_times_provisorios" },
 ];
 
 /** Estrutura das telas logadas: faixa lateral escura com menu e área de conteúdo. */
@@ -54,6 +59,15 @@ export function Moldura({ children }: { children: React.ReactNode }) {
     void recarregar();
   }, [recarregar]);
 
+  const [espacos, setEspacos] = useState<EspacoResumo[]>([]);
+  useEffect(() => {
+    if (!eu) return;
+    const carregar = () => api.espacos().then(setEspacos).catch(() => undefined);
+    void carregar();
+    window.addEventListener("espacos-mudaram", carregar);
+    return () => window.removeEventListener("espacos-mudaram", carregar);
+  }, [eu]);
+
   async function sair() {
     await api.sair().catch(() => undefined);
     router.replace("/entrar");
@@ -73,6 +87,24 @@ export function Moldura({ children }: { children: React.ReactNode }) {
           <div style={{ fontWeight: 600, fontSize: 16, padding: "0 8px 10px" }}>Gerenciador</div>
           <Link href="/" className={`item${ativo("/") ? " ativo" : ""}`}>
             <IconHome size={16} stroke={1.5} /> Início
+          </Link>
+          {[
+            ["Espaços", espacos.filter((e) => e.tipo === "projeto"), <IconFolder key="f" size={16} stroke={1.5} />],
+            ["Pessoal", espacos.filter((e) => e.tipo === "pessoal"), <IconUser key="u" size={16} stroke={1.5} />],
+          ].map(([titulo, lista, icone]) =>
+            (lista as EspacoResumo[]).length > 0 ? (
+              <div key={titulo as string}>
+                <div className="secao">{titulo as string}</div>
+                {(lista as EspacoResumo[]).map((e) => (
+                  <Link key={e.id} href={`/espacos/${e.sigla}`} className={`item${ativo(`/espacos/${e.sigla}`) ? " ativo" : ""}`} title={e.nome}>
+                    {icone as React.ReactNode} <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.nome}</span>
+                  </Link>
+                ))}
+              </div>
+            ) : null,
+          )}
+          <Link href="/espacos/novo" className={`item item-discreto${ativo("/espacos/novo") ? " ativo" : ""}`}>
+            <IconPlus size={16} stroke={1.5} /> Criar espaço
           </Link>
           {admin.length > 0 && (
             <>
@@ -108,6 +140,8 @@ export function Moldura({ children }: { children: React.ReactNode }) {
         .faixa .item{display:flex;gap:8px;align-items:center;padding:7px 8px;border-radius:8px;color:#fff;font-size:13px;text-decoration:none;background:none;border:none;cursor:pointer;width:100%;text-align:left}
         .faixa .item:hover{background:var(--verde-faixa)}
         .faixa .item.ativo{background:var(--verde)}
+        .faixa .item-discreto{color:var(--verde-claro);margin-top:6px}
+        .faixa{overflow-y:auto}
         .faixa .rodape{margin-top:auto;border-top:0.5px solid var(--verde-faixa);padding-top:12px}
         .conteudo{padding:24px 28px;min-width:0;max-width:1180px}
         @media (max-width:760px){.moldura{grid-template-columns:1fr}.faixa{position:static;height:auto}.conteudo{padding:16px}}

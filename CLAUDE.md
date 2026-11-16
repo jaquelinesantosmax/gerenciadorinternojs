@@ -54,4 +54,9 @@ Se algum ponto não estiver nesses arquivos, pergunte. Não preencha lacunas por
 
 ## Ordem de construção
 
-A ordem completa está em `docs/decisoes-de-desenho.md`, seção "Ordem de construção". A etapa atual é a **Etapa 1 – Fundação**: login, cadastro automático no primeiro acesso, sessão de 15 dias, papéis da plataforma e auditoria.
+A ordem completa está em `docs/decisoes-de-desenho.md`, seção "Ordem de construção".
+
+- Etapa 1 – Fundação: entregue em 16/11 (login de teste, cadastro automático, sessão, papéis da plataforma e auditoria).
+- Etapa 2 – Espaços e itens: entregue em 16/11 para validação da Jaqueline (espaços de projeto e pessoais, membros, painéis, tipos, campos padronizados e personalizados, itens, detalhe do item, comentários, anexos e itens relacionados).
+- Ficou para depois, de propósito: mover item entre espaços (a tabela de apelidos já existe), botão Solicitar acesso (Etapa 4), Observar item (Etapa 8) e compartilhamento do espaço pessoal (Etapa 4).
+- Ao registrar uma decisão nova em `docs/decisoes-de-desenho.md`, atualize também as duas cópias no OneDrive da Jaqueline, se elas não tiverem mudado por lá.
