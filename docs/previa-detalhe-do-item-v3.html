@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Detalhe do item · Prévia v3</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" rel="stylesheet">
+<style>
+body{margin:0;padding:24px;background:#F1F4F8;font-family:Inter,sans-serif}
+.x{display:grid;grid-template-columns:240px minmax(0,1fr);border-radius:12px;overflow:hidden;font-family:Inter,sans-serif;color:#101729;font-size:14px;background:#fff;border:0.5px solid #D5DCE4;max-width:1100px;margin:0 auto}
+@media (max-width:700px){.x{grid-template-columns:1fr}}
+.band{background:#004D3B;color:#fff;padding:18px 16px}.lb{font-size:12px;font-weight:300;color:#BFE0D5;margin-top:14px}.vl{font-size:14px;margin-top:2px}
+.sheet{padding:18px 20px;min-width:0}.cap{font-size:12px;font-weight:300;color:#383F49}
+.seg{display:inline-flex;border:0.5px solid #D5DCE4;border-radius:8px;overflow:hidden}.seg button{border:none;background:#fff;padding:7px 12px;font-family:Inter,sans-serif;font-size:13px;color:#383F49;cursor:pointer}
+.seg .pub.on{background:#FAEEDA;color:#633806}.seg .int.on{background:#F1EFE8;color:#444441}
+.tb{border:none;background:none;font-family:Inter,sans-serif;font-size:13px;color:#383F49;padding:5px 10px;border-radius:20px;cursor:pointer}.tb.on{background:#E1F5EE;color:#004D3B;font-weight:500}
+.rail{position:relative;margin-top:10px;padding-left:22px}.rail:before{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:1px;background:#D5DCE4}
+.ev{position:relative;padding:8px 0}.dot{position:absolute;left:-21px;top:13px;width:11px;height:11px;border-radius:50%;box-sizing:border-box}
+.d-pub{background:#EF9F27}.d-int{background:#fff;border:2px solid #888780}.d-his{background:#D3D1C7;width:7px;height:7px;left:-19px;top:15px}.d-del{background:#fff;border:1.5px solid #B4B2A9}
+.note{background:#F1EFE8;border:0.5px dashed #888780;border-radius:8px;padding:8px 10px;margin-top:4px}.reply{background:#FFF8EC;border:0.5px solid #FAC775;border-radius:8px;padding:8px 10px;margin-top:4px;line-height:1.5}
+.cta{background:#63B424;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-family:Inter,sans-serif;font-size:13px;cursor:pointer}
+button:focus-visible,textarea:focus-visible{outline:2px solid #63B424;outline-offset:2px}
+#chrome{position:fixed;right:20px;bottom:20px;background:#007A5F;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-family:Inter,sans-serif;font-size:13px;cursor:pointer;z-index:10}
+</style>
+</head>
+<body>
+<div class="x">
+<div class="band">
+<div style="font-size:28px;font-weight:600;letter-spacing:-0.5px">SUP-44</div>
+<div style="font-size:12px;font-weight:300;color:#BFE0D5">Suporte Soluções</div>
+<div class="lb">Resolução vence em</div>
+<div style="font-size:40px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums">1h40</div>
+<div style="height:4px;background:#0F6E56;border-radius:20px;margin-top:6px"><div style="width:83%;height:4px;background:#EF9F27;border-radius:20px"></div></div>
+<div style="font-size:12px;font-weight:300;color:#BFE0D5;margin-top:4px">83% do prazo usado</div>
+<div class="lb">Status</div><div style="margin-top:4px"><span style="background:#fff;color:#004D3B;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:500">Em atuação</span></div>
+<div class="lb">Responsável</div><div class="vl">Bruno Reis</div>
+<div class="lb">Nível e prioridade</div><div class="vl">N2, alta</div>
+<div class="lb">Time</div><div class="vl">Suporte B2B</div>
+<button id="obs" style="margin-top:18px;width:100%;background:none;border:0.5px solid #BFE0D5;color:#fff;border-radius:8px;padding:7px;font-family:Inter,sans-serif;font-size:13px;cursor:pointer"><i class="ti ti-eye"></i> Observar</button>
+<div id="obsbox"></div>
+</div>
+<div class="sheet">
+<div style="font-size:22px;font-weight:600;color:#007A5F;line-height:1.25">Relatório de processos não exporta para Excel</div>
+<div class="cap" style="margin-top:4px">Aberto por Marina Costa em 15/11, 09:58, pelo formulário Problema</div>
+<div style="margin-top:12px;line-height:1.6;max-width:62ch">Ao clicar em <b style="font-weight:500">Exportar</b>, o arquivo vem vazio desde 14/11. Acontece no Chrome e afeta o relatório ligado ao LOP-12.</div>
+<div style="margin-top:18px;border:1px solid #EF9F27;background:#FFF8EC;border-radius:12px;padding:10px" id="box">
+<div class="seg"><button class="pub on" id="mp">Responder ao solicitante</button><button class="int" id="mi">Nota interna</button></div>
+<textarea id="txt" rows="2" style="display:block;width:100%;box-sizing:border-box;margin-top:8px;border:none;resize:vertical;font-family:Inter,sans-serif;font-size:14px;outline:none;background:#FFF8EC" placeholder="Escreva a resposta. Use @ para mencionar alguém"></textarea>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span id="err" style="font-size:13px;color:#A32D2D"></span><button class="cta" id="send">Enviar resposta</button></div>
+</div>
+<div style="display:flex;gap:4px;margin-top:18px" id="tabs"><button class="tb on" data-v="a">Tudo</button><button class="tb" data-v="c">Comentários</button><button class="tb" data-v="h">Histórico</button></div>
+<div class="rail" id="view"></div>
+</div>
+</div>
+<button id="chrome" onclick="window.open(location.href)"><i class="ti ti-external-link"></i> Abrir no Chrome</button>
+<script>
+let tab='a',mode='pub',seq=100;
+const ev=[
+{o:0,k:'his',t:'15/11, 09:58',w:'Sistema',d:'abriu o ticket'},
+{o:1,k:'his',t:'15/11, 10:05',w:'Automação do espaço',d:'atribuiu a Bruno Reis pelo rodízio'},
+{o:2,k:'pub',t:'15/11, 10:12',w:'Carla Souza',d:'Consegue enviar um print da tela de exportação?'},
+{o:3,k:'his',t:'15/11, 10:40',w:'Bruno Reis',d:'mudou o nível de N1 para N2'},
+{o:4,k:'int',t:'15/11, 11:03',w:'Bruno Reis',d:'Parece o mesmo erro do LOP-15. Vou validar com o time de dados antes de responder.',e:1},
+{o:5,k:'his',t:'15/11, 11:05',w:'Bruno Reis',d:'editou a nota interna'},
+{o:6,k:'del',t:'15/11, 11:20',w:'Ana Lima',d:'excluiu um comentário'}];
+function row(e){const isC=e.k==='pub'||e.k==='int';
+if(isC)return '<div class="ev"><span class="dot d-'+e.k+'"></span><div><span style="font-weight:500">'+e.w+'</span> <span class="cap">'+e.t+(e.e?', editado':'')+'</span></div>'+(e.k==='int'?'<div class="note"><div style="font-size:12px;color:#444441;margin-bottom:2px">Nota interna, visível só para a equipe</div>'+e.d+'</div>':'<div class="reply">'+e.d+'</div>')+'</div>';
+return '<div class="ev"><span class="dot d-'+(e.k==='del'?'del':'his')+'"></span><span class="cap">'+e.t+'</span> <span style="font-size:13px;color:#383F49">'+e.w+' '+e.d+'</span></div>'}
+function render(){const f=ev.filter(e=>tab==='a'||(tab==='c'?(e.k==='pub'||e.k==='int'||e.k==='del'):(e.k==='his'||e.k==='del'))).sort((a,b)=>b.o-a.o);document.getElementById('view').innerHTML=f.map(row).join('')}
+function setMode(m){mode=m;document.getElementById('mp').classList.toggle('on',m==='pub');document.getElementById('mi').classList.toggle('on',m==='int');const b=document.getElementById('box');b.style.border=m==='pub'?'1px solid #EF9F27':'1px dashed #888780';b.style.background=m==='pub'?'#FFF8EC':'#F1EFE8';document.getElementById('txt').style.background=b.style.background;document.getElementById('txt').placeholder=m==='pub'?'Escreva a resposta. Use @ para mencionar alguém':'Só agentes, ADM e Gestor vão ver esta nota';document.getElementById('send').textContent=m==='pub'?'Enviar resposta':'Salvar nota interna'}
+document.getElementById('mp').onclick=()=>setMode('pub');document.getElementById('mi').onclick=()=>setMode('int');
+document.getElementById('txt').oninput=()=>{document.getElementById('err').textContent=''};
+document.getElementById('send').onclick=()=>{const t=document.getElementById('txt').value.trim();if(!t){document.getElementById('err').textContent='Escreva algo antes de enviar.';return}seq++;ev.push({o:seq,k:mode,t:'agora',w:'Você',d:t.replace(/</g,'&lt;')});document.getElementById('txt').value='';render()};
+document.getElementById('tabs').onclick=e=>{const b=e.target.closest('.tb');if(!b)return;tab=b.dataset.v;document.querySelectorAll('.tb').forEach(x=>x.classList.toggle('on',x===b));render()};
+document.getElementById('obs').onclick=()=>{document.getElementById('obsbox').innerHTML='<div style="margin-top:8px;background:#fff;color:#101729;border-radius:8px;padding:8px;font-size:12px">Receber as atualizações do SUP-44?<div style="display:flex;gap:6px;margin-top:6px"><button class="cta" id="oy" style="padding:5px 10px;font-size:12px">Observar</button><button id="on" style="background:none;border:0.5px solid #D5DCE4;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancelar</button></div></div>';
+document.getElementById('oy').onclick=()=>{document.getElementById('obs').innerHTML='<i class="ti ti-eye-check"></i> Observando';document.getElementById('obsbox').innerHTML=''};document.getElementById('on').onclick=()=>{document.getElementById('obsbox').innerHTML=''}};
+render();
+</script>
+</body>
+</html>
