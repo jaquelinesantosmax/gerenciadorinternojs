@@ -44,7 +44,7 @@ TABELAS = [
     "eventos_auditoria", "sessoes", "concessoes_papel", "dominios_autorizados", "usuarios", "times", "espacos",
     "membros_espaco", "paineis", "tipos_item", "status_item", "opcoes_origem", "itens", "co_responsaveis",
     "apelidos_item", "campos_personalizados", "historico_item", "comentarios", "versoes_comentario", "anexos",
-    "vinculos", "config_plataforma",
+    "vinculos", "config_plataforma", "status_do_espaco", "transicoes", "quadros", "colunas_quadro",
 ]
 
 # Mesmos dados iniciais das migrações (tipos e status padrão, limite de anexos).

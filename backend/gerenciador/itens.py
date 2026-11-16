@@ -241,7 +241,7 @@ def _conferir(
     status_id = _uuid(valor("status_id"), "Status")
     if status_id is None:
         raise ErroDeRegra("Informe o status.")
-    if status_id not in {s.id for s in listar_status(db)}:
+    if status_id not in {s.id for s in listar_status(db, espaco)}:
         raise ErroDeRegra("Status inválido.")
 
     prioridade = valor("prioridade")
@@ -464,6 +464,9 @@ def editar(
     estado = _conferir(db, espaco, dados, item, anexos)
     novo_status = db.get(StatusItem, estado.status_id)
     status_atual = db.get(StatusItem, item.status_id)
+    from .workflow import conferir_transicao
+
+    conferir_transicao(db, espaco, status_atual, novo_status)
     if novo_status.categoria == "concluido" and status_atual.categoria != "concluido":
         bloqueios = bloqueios_abertos(db, ator, item)
         if bloqueios and not confirmar_bloqueio:

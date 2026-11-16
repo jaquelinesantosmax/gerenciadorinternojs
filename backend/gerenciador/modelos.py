@@ -110,4 +110,5 @@ class EventoAuditoria(Base):
 from . import (
     modelos_espacos,  # noqa: E402, F401
     modelos_itens,  # noqa: E402, F401
+    modelos_quadros,  # noqa: E402, F401
 )

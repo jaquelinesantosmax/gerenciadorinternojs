@@ -263,14 +263,14 @@ def test_vinculo_entra_no_historico_dos_dois_itens_e_pode_ser_removido(cenario):
 
 def test_concluir_item_bloqueado_pede_confirmacao_e_registra(cenario, db):
     c = cenario
-    a, b = criar_item(c["adm"], c), criar_item(c["adm"], c)
+    a, b = (criar_item(c["adm"], c, status_id=c["status"]["Em validação"]) for _ in range(2))
     _vincular(c["adm"], a["chave"], "bloqueia", b["chave"])
     concluir = {"dados": {"status_id": c["status"]["Concluído"]}}
     aviso = c["adm"].patch(f"/api/itens/{b['chave']}", json=concluir)
     assert aviso.status_code == 409
     assert aviso.json()["detail"] == {"mensagem": "Este item ainda é bloqueado por: LOP-1. Concluir mesmo assim?",
                                       "codigo": "concluir_bloqueado", "bloqueios": ["LOP-1"]}
-    assert c["adm"].get(f"/api/itens/{b['chave']}").json()["status"]["nome"] == "A fazer"
+    assert c["adm"].get(f"/api/itens/{b['chave']}").json()["status"]["nome"] == "Em validação"
     ok = c["adm"].patch(f"/api/itens/{b['chave']}", json={**concluir, "confirmar_bloqueio": True})
     assert ok.json()["status"]["nome"] == "Concluído"
     historico = c["adm"].get(f"/api/itens/{b['chave']}/atividade", params={"filtro": "historico"}).json()

@@ -3,7 +3,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from .api import admin, auth, espacos, itens
+from .api import admin, auth, espacos, itens, quadros
 from .config import obter_config
 from .erros import ErroDeRegra
 
@@ -46,4 +46,5 @@ def criar_app() -> FastAPI:
     app.include_router(admin.rotas)
     app.include_router(espacos.rotas)
     app.include_router(itens.rotas)
+    app.include_router(quadros.rotas)
     return app

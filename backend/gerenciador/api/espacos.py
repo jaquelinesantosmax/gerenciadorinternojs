@@ -116,7 +116,7 @@ def _detalhe(db: Session, usuario: Usuario, e: Espaco) -> EspacoDetalhe:
         paineis=[Opcao(id=p.id, nome=p.nome) for p in svc.listar_paineis(db, e)],
         tipos=[TipoSaida(id=t.id, nome=t.nome, nivel=t.nivel, padrao=t.espaco_id is None)
                for t in svc.listar_tipos(db, e)],
-        status=[StatusSaida(id=s.id, nome=s.nome, categoria=s.categoria) for s in svc.listar_status(db)],
+        status=[StatusSaida(id=s.id, nome=s.nome, categoria=s.categoria) for s in svc.listar_status(db, e)],
         origens=[Opcao(id=o.id, nome=o.nome) for o in svc.listar_origens(db, e)],
     )
 

@@ -125,6 +125,9 @@ def criar_espaco(
         # Quem cria vira ADM do espaço (matriz: "Criar espaço de equipe (vira ADM dele)").
         db.add(MembroEspaco(espaco_id=espaco.id, usuario_id=ator.id, papel="adm", adicionado_por_id=ator.id,
                             adicionado_em=relogio.agora()))
+    from .workflow import preparar_espaco
+
+    preparar_espaco(db, espaco)
     registrar(db, TipoEvento.ESPACO_CRIADO, ator_id=ator.id, ip=ip, espaco=espaco.sigla, tipo_espaco=tipo, modelo=modelo)
     try:
         db.commit()
@@ -259,6 +262,10 @@ def criar_painel(db: Session, ator: Usuario, espaco: Espaco, nome: str) -> Paine
         raise OperacaoNegada(f"Já existe um painel chamado {nome}.")
     painel = Painel(espaco_id=espaco.id, nome=nome, criado_por_id=ator.id, criado_em=relogio.agora())
     db.add(painel)
+    db.flush()
+    from .workflow import preparar_painel
+
+    preparar_painel(db, espaco, painel)
     db.commit()
     return painel
 
@@ -347,8 +354,11 @@ def excluir_tipo(db: Session, ator: Usuario, espaco: Espaco, tipo_id: uuid.UUID,
     db.commit()
 
 
-def listar_status(db: Session) -> list[StatusItem]:
-    return list(db.scalars(select(StatusItem).where(StatusItem.espaco_id.is_(None)).order_by(StatusItem.ordem)))
+def listar_status(db: Session, espaco: Espaco) -> list[StatusItem]:
+    """Status ligados no espaço, na ordem do espaço (Etapa 3a)."""
+    from .workflow import status_do_espaco
+
+    return status_do_espaco(db, espaco)
 
 
 # --- Origens da solicitação -------------------------------------------------------------------

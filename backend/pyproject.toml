@@ -10,7 +10,7 @@ pythonpath = ["."]
 addopts = "-q"
 
 [tool.ruff]
-line-length = 125
+line-length = 135
 target-version = "py312"
 extend-exclude = ["migracoes/versions"]
 

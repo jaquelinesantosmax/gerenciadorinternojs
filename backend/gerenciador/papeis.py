@@ -31,6 +31,8 @@ PERMISSOES: dict[str, frozenset[Papel]] = {
     # Lista provisória de Times (decisão de 16/11), até o cadastro de Times da Etapa 4.
     "gerenciar_times_provisorios": frozenset({ADM}),
     "definir_limite_anexos": frozenset({ADM}),
+    # Matriz: "Gerenciar campos padronizados e catálogo de status" é só do ADM da plataforma.
+    "gerenciar_status_padrao": frozenset({ADM}),
 }
 
 _PERMISSAO_PARA_PAPEL = {

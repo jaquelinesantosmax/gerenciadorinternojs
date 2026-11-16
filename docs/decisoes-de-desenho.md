@@ -89,6 +89,9 @@ Quadros e visões
 - Simples: colunas por status, sem sprint nem limite, para acompanhamento de tarefas.
 - Coluna do quadro não é o mesmo que status: uma coluna pode agrupar vários status.
 - Lista e Gantt valem para qualquer quadro; no Gantt, vínculos "Bloqueia" aparecem como setas de dependência.
+- Decidido em 16/11: o quadro nasce com uma coluna para cada status ligado no espaço; o ADM junta colunas depois, se quiser.
+- Decidido em 16/11: no Kanban, os itens em Backlog ficam numa área de backlog separada, fora do quadro. O ADM pode desligar o backlog, e aí Backlog vira a primeira coluna.
+- Decidido em 16/11: ao arrastar um card para outra coluna, o sistema pergunta se a pessoa quer mudar o status do item para o status daquela coluna (se a coluna juntar mais de um status, a pessoa escolhe qual). O fluxo de transições continua valendo.
 
 Itens
 
