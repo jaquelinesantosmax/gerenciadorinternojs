@@ -376,7 +376,8 @@ export const api = {
   editarItem: (chave: string, dados: DadosItem, confirmar_bloqueio = false) =>
     pedir<ItemDetalhe>(`/api/itens/${chave}`, { method: "PATCH", body: json({ dados, confirmar_bloqueio }) }),
   excluirItem: (chave: string) => pedir<void>(`/api/itens/${chave}`, { method: "DELETE" }),
-  clonarItem: (chave: string) => pedir<ItemDetalhe>(`/api/itens/${chave}/clonar`, { method: "POST" }),
+  clonarItem: (chave: string, opcoes: { copiar_comentarios: boolean; copiar_anexos: boolean }) =>
+    pedir<ItemDetalhe>(`/api/itens/${chave}/clonar`, { method: "POST", body: json(opcoes) }),
   buscarItens: (q: string) => pedir<ItemCurto[]>(`/api/itens/busca?q=${encodeURIComponent(q)}`),
 
   atividade: (chave: string, filtro: "tudo" | "comentarios" | "historico") =>

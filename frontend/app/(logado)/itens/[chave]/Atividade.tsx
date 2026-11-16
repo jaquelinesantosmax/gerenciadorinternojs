@@ -212,6 +212,7 @@ export function Atividade({
 
 export function descreverMudanca(e: EventoAtividade): string {
   if (e.campo === "criado") return `criou o item`;
+  if (e.campo === "Clonado de") return `clonou este item de ${e.valor_novo}`;
   if (e.campo === "Conclusão com bloqueio aberto") return `concluiu com bloqueio aberto. ${e.valor_novo ?? ""}`;
   if (e.campo === "Anexos") return e.valor_novo ? `anexou ${e.valor_novo}` : `excluiu o anexo ${e.valor_anterior}`;
   if (e.campo === "Itens relacionados") return e.valor_novo ? `vinculou: ${e.valor_novo}` : `desvinculou: ${e.valor_anterior}`;

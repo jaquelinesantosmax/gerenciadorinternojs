@@ -397,10 +397,20 @@ def excluir_item(
     return Response(status_code=204)
 
 
+class PedidoClonar(BaseModel):
+    copiar_comentarios: bool = False
+    copiar_anexos: bool = False
+
+
 @rotas.post("/itens/{chave}/clonar", response_model=ItemDetalhe, status_code=201)
-def clonar_item(chave: str, usuario: Usuario = Depends(usuario_atual), db: Session = Depends(obter_db)) -> ItemDetalhe:
+def clonar_item(
+    chave: str, pedido: PedidoClonar | None = None,
+    usuario: Usuario = Depends(usuario_atual), db: Session = Depends(obter_db),
+) -> ItemDetalhe:
     item, espaco = itens_svc.buscar(db, usuario, chave)
-    copia = itens_svc.clonar(db, usuario, item, espaco)
+    pedido = pedido or PedidoClonar()
+    copia = itens_svc.clonar(db, usuario, item, espaco, copiar_comentarios=pedido.copiar_comentarios,
+                             copiar_anexos=pedido.copiar_anexos)
     return _detalhe(db, usuario, copia, espaco)
 
 

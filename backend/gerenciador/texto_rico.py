@@ -118,3 +118,23 @@ def anexos_citados(no: dict[str, Any] | None) -> set[str]:
     for filho in no.get("content") or []:
         achados |= anexos_citados(filho)
     return {a for a in achados if a}
+
+
+def trocar_imagens(no: dict[str, Any] | None, mapa: dict[str, str]) -> dict[str, Any] | None:
+    """Copia o documento trocando o anexo de cada imagem pelo novo id. Imagens sem par no mapa saem."""
+    if not no:
+        return None
+
+    def copiar(atual: dict[str, Any]) -> dict[str, Any] | None:
+        if atual.get("type") == "image":
+            novo = mapa.get((atual.get("attrs") or {}).get("anexoId"))
+            return {**atual, "attrs": {**atual["attrs"], "anexoId": novo}} if novo else None
+        resultado = dict(atual)
+        if "content" in atual:
+            resultado["content"] = [c for c in (copiar(f) for f in atual.get("content") or []) if c is not None]
+        return resultado
+
+    documento = copiar(no)
+    if documento is None or (not texto_simples(documento).strip() and not _tem_imagem(documento)):
+        return None
+    return documento

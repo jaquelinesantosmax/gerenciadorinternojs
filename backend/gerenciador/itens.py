@@ -525,9 +525,15 @@ def excluir(db: Session, ator: Usuario, item: Item, espaco: Espaco, ip: str | No
     db.commit()
 
 
-def clonar(db: Session, ator: Usuario, item: Item, espaco: Espaco) -> Item:
+def clonar(
+    db: Session, ator: Usuario, item: Item, espaco: Espaco, *, copiar_comentarios: bool = False,
+    copiar_anexos: bool = False,
+) -> Item:
     """Cria uma cópia com os mesmos campos e o vínculo "Clona" (docs/decisoes-de-desenho.md).
-    Comentários, anexos e histórico não são copiados."""
+    Antes, a pessoa escolhe se copia também os comentários e os anexos (com as imagens da descrição).
+    O histórico nunca é copiado."""
+    from .armazenamento import obter_armazenamento
+    from .modelos_itens import Comentario
     from .vinculos import criar_vinculo_sistema
 
     dados = {
@@ -541,10 +547,34 @@ def clonar(db: Session, ator: Usuario, item: Item, espaco: Espaco) -> Item:
         "valores": {cid: v for cid, v in item.valores.items()
                     if cid in {str(c.id) for c in campos_svc.campos_do_tipo(db, espaco, item.tipo_id)}},
     }
-    # A descrição vai sem imagens, porque as imagens são anexos do item original.
-    if item.descricao and not texto_rico.anexos_citados(item.descricao):
-        dados["descricao"] = item.descricao
     copia = criar(db, ator, espaco, dados)
+
+    # Anexos: cada arquivo é copiado, para a cópia não depender do original.
+    mapa: dict[str, str] = {}
+    if copiar_anexos:
+        armazenamento = obter_armazenamento()
+        for anexo in db.scalars(select(Anexo).where(Anexo.item_id == item.id, Anexo.excluido_em.is_(None))):
+            novo = Anexo(item_id=copia.id, nome_arquivo=anexo.nome_arquivo, tipo_mime=anexo.tipo_mime,
+                         tamanho=anexo.tamanho, chave_armazenamento=armazenamento.copiar(anexo.chave_armazenamento),
+                         enviado_por_id=anexo.enviado_por_id, enviado_em=anexo.enviado_em)
+            db.add(novo)
+            db.flush()
+            mapa[str(anexo.id)] = str(novo.id)
+    # Imagens apontam para os anexos copiados; sem copiar anexos, as imagens saem e o texto fica.
+    copia.descricao = texto_rico.trocar_imagens(item.descricao, mapa)
+
+    if copiar_comentarios:
+        for c in db.scalars(select(Comentario).where(Comentario.item_id == item.id, Comentario.excluido_em.is_(None))
+                            .order_by(Comentario.criado_em)):
+            corpo = texto_rico.trocar_imagens(c.corpo, mapa)
+            if corpo:
+                db.add(Comentario(item_id=copia.id, autor_id=c.autor_id, corpo=corpo, criado_em=c.criado_em,
+                                  editado_em=c.editado_em))
+
+    copiado = [nome for nome, sim in (("comentários", copiar_comentarios), ("anexos", copiar_anexos)) if sim]
+    db.add(HistoricoItem(item_id=copia.id, autor_id=ator.id, ocorrido_em=relogio.agora(), campo="Clonado de",
+                         valor_anterior=None,
+                         valor_novo=chave(espaco, item) + (f" (com {' e '.join(copiado)})" if copiado else "")))
     criar_vinculo_sistema(db, ator, "clona", copia, item)
     db.commit()
     return copia

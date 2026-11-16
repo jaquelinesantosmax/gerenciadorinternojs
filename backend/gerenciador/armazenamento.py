@@ -26,6 +26,8 @@ class Armazenamento(Protocol):
 
     def primeiros_bytes(self, chave: str, quantidade: int) -> bytes: ...
 
+    def copiar(self, chave: str) -> str: ...
+
     def apagar(self, chave: str) -> None: ...
 
 
@@ -68,6 +70,12 @@ class ArmazenamentoLocal:
     def primeiros_bytes(self, chave: str, quantidade: int) -> bytes:
         with open(self._caminho(chave), "rb") as arquivo:
             return arquivo.read(quantidade)
+
+    def copiar(self, chave: str) -> str:
+        """Faz uma cópia do arquivo e devolve a chave nova (usado ao clonar itens com anexos)."""
+        with open(self._caminho(chave), "rb") as origem:
+            nova, _ = self.salvar(origem, limite_bytes=1 << 62)
+        return nova
 
     def apagar(self, chave: str) -> None:
         try:

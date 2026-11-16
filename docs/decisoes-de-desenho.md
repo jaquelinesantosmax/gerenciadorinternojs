@@ -119,6 +119,10 @@ Decididos em 16/11, para a Etapa 2
 - Tipos de campo personalizado: texto curto, texto longo, número, moeda (o ADM escolhe a moeda), data, data e hora, URL, lista de escolha única, lista de escolha múltipla, lista em cascata, pessoa e sim/não.
 - Ao criar um campo personalizado, o ADM do espaço escolhe em quais tipos de item ele aparece e se é obrigatório.
 - Tipos de item próprios ficam no nível de História, Tarefa e Bug: podem estar dentro de um Épico e ter Subtarefas.
+- Responsável e co-responsáveis precisam ser ADM ou Membro do espaço (no pessoal, o dono).
+- A data de entrega não pode ser antes da data de início.
+- Campo personalizado que passa a ser obrigatório é cobrado nos itens novos e, nos que já existem, quando alguém mexe nele.
+- Clonar copia todos os campos e cria o vínculo "Clona". Antes de clonar, o sistema pergunta se a pessoa quer copiar também os comentários e os anexos (com as imagens da descrição).
 - Painéis aparecem no menu em cascata, abaixo do nome do espaço; cada painel abre os itens daquela frente, e um item criado ali já vem com o painel preenchido.
 - O campo Sim/Não é uma caixa de marcar com um texto livre ao lado, definido pelo ADM do espaço (ex.: "Envolve outra área?").
 - As visualizações Lista, Kanban e Gantt dentro de cada espaço e painel entram na Etapa 3.
@@ -134,7 +138,8 @@ Decididos em 16/11, para a Etapa 2
 - O ADM da plataforma pode promover um status de espaço a padrão, que passa a ficar disponível como opção, sem ser imposto.
 - Concluir item ainda bloqueado: permitido, com alerta listando os bloqueios e confirmação registrada no histórico, em todos os workflows.
 - Decidido em 16/11: todo espaço nasce com os 8 status padrão ligados; o ADM desliga os que não usa e cria status próprios.
-- Decidido em 16/11: cada modelo (Scrum, Kanban, Gestão de tarefas) já nasce com um fluxo de transições definido, que o ADM do espaço ajusta. O fluxo de cada modelo está em definição.
+- Decidido em 16/11: cada modelo (Scrum, Kanban, Gestão de tarefas) já nasce com um fluxo de transições definido, que o ADM do espaço ajusta. Fluxo padrão, igual nos três modelos: Backlog → A fazer → Em andamento → Em validação → Concluído; Em andamento vai e volta de Aguardando terceiros e de Bloqueado; Em validação volta para Em andamento; qualquer status vai para Cancelado; Concluído e Cancelado voltam para A fazer (reabrir). No Scrum, o item sai do Backlog quando entra numa sprint.
+- Decidido em 16/11: categorias dos status padrão. A fazer: Backlog e A fazer. Em andamento: Em andamento, Em validação, Aguardando terceiros e Bloqueado. Concluído: Concluído e Cancelado.
 - Decidido em 16/11: a Etapa 3 é entregue em duas partes. 3a: catálogo de status, workflow, quadros Kanban e simples (colunas e limite) e as abas Lista, Kanban e Gantt. 3b: Scrum (backlog, sprints, burndown, velocidade e relatório) e métricas do Kanban.
 
 ## Itens relacionados e anexos

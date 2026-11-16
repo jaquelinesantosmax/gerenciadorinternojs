@@ -286,3 +286,35 @@ def test_busca_de_itens_para_vincular(cenario):
     criar_item(c["adm"], c, resumo="Padronizar petição")
     assert [i["chave"] for i in c["membro"].get("/api/itens/busca", params={"q": "petição"}).json()] == ["LOP-1"]
     assert [i["chave"] for i in c["membro"].get("/api/itens/busca", params={"q": "lop-1"}).json()] == ["LOP-1"]
+
+
+def test_clonar_pergunta_se_copia_comentarios_e_anexos(cenario):
+    c = cenario
+    item = criar_item(c["adm"], c)
+    anexo = _enviar(c["adm"], item["chave"], ("print.png", PNG)).json()[0]
+    com_imagem = {"type": "doc", "content": [
+        {"type": "paragraph", "content": [{"type": "text", "text": "Veja o print"}]},
+        {"type": "image", "attrs": {"anexoId": anexo["id"]}}]}
+    c["adm"].patch(f"/api/itens/{item['chave']}", json={"dados": {"descricao": com_imagem}})
+    c["membro"].post(f"/api/itens/{item['chave']}/comentarios", json={"corpo": doc("Primeiro comentário")})
+
+    # Sem copiar: só o texto da descrição vai, sem a imagem, sem comentários nem anexos.
+    simples = c["adm"].post(f"/api/itens/{item['chave']}/clonar", json={}).json()
+    assert simples["anexos"] == []
+    assert [n["type"] for n in simples["descricao"]["content"]] == ["paragraph"]
+    assert c["adm"].get(f"/api/itens/{simples['chave']}/atividade", params={"filtro": "comentarios"}).json() == []
+
+    # Copiando tudo: anexo novo (arquivo copiado), imagem apontando para ele e comentário com o autor original.
+    completo = c["adm"].post(f"/api/itens/{item['chave']}/clonar",
+                             json={"copiar_comentarios": True, "copiar_anexos": True}).json()
+    [novo_anexo] = completo["anexos"]
+    assert novo_anexo["id"] != anexo["id"] and novo_anexo["nome_arquivo"] == "print.png"
+    assert completo["descricao"]["content"][1]["attrs"]["anexoId"] == novo_anexo["id"]
+    assert c["adm"].get(novo_anexo["link"]).content == PNG
+    [comentario] = c["adm"].get(f"/api/itens/{completo['chave']}/atividade", params={"filtro": "comentarios"}).json()
+    assert comentario["autor"]["nome"] == "Marta Membro"
+    historico = c["adm"].get(f"/api/itens/{completo['chave']}/atividade", params={"filtro": "historico"}).json()
+    assert ("Clonado de", "LOP-1 (com comentários e anexos)") in [(h["campo"], h["valor_novo"]) for h in historico]
+    # Excluir o anexo da cópia não apaga o arquivo do original.
+    c["adm"].delete(f"/api/itens/{completo['chave']}/anexos/{novo_anexo['id']}")
+    assert c["adm"].get(anexo["link"]).content == PNG

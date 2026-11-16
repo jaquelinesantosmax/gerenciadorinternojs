@@ -31,6 +31,7 @@ export default function PaginaItem() {
   const [descricao, setDescricao] = useState<DocTexto | null>(null);
   const [confirmacao, setConfirmacao] = useState<{ mensagem: string; dados: Record<string, unknown> } | null>(null);
   const [excluindo, setExcluindo] = useState(false);
+  const [clonando, setClonando] = useState<{ copiar_comentarios: boolean; copiar_anexos: boolean } | null>(null);
   const [ocupado, setOcupado] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
 
@@ -166,17 +167,7 @@ export default function PaginaItem() {
               </button>
             )}
             {p.criar_itens && (
-              <button
-                className="botao-faixa"
-                onClick={async () => {
-                  try {
-                    const copia = await api.clonarItem(item.chave);
-                    router.push(`/itens/${copia.chave}`);
-                  } catch (f) {
-                    setMensagem(f instanceof ErroApi ? f.message : "Não foi possível clonar.");
-                  }
-                }}
-              >
+              <button className="botao-faixa" onClick={() => setClonando({ copiar_comentarios: false, copiar_anexos: false })}>
                 <IconCopy size={14} stroke={1.5} /> Clonar
               </button>
             )}
@@ -334,6 +325,38 @@ export default function PaginaItem() {
         aoCancelar={() => setConfirmacao(null)}
       >
         {confirmacao?.mensagem} A confirmação fica registrada no histórico.
+      </Dialogo>
+
+      <Dialogo
+        aberto={clonando !== null}
+        titulo={`Clonar ${item.chave}?`}
+        textoConfirmar="Clonar"
+        ocupado={ocupado}
+        aoConfirmar={async () => {
+          if (!clonando) return;
+          setOcupado(true);
+          try {
+            const copia = await api.clonarItem(item.chave, clonando);
+            setClonando(null);
+            router.push(`/itens/${copia.chave}`);
+          } catch (f) {
+            setMensagem(f instanceof ErroApi ? f.message : "Não foi possível clonar.");
+            setClonando(null);
+          } finally {
+            setOcupado(false);
+          }
+        }}
+        aoCancelar={() => setClonando(null)}
+      >
+        <p style={{ margin: "0 0 10px" }}>A cópia leva todos os campos e fica vinculada ao original como &quot;clona&quot;. Quer copiar também:</p>
+        <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <input type="checkbox" checked={clonando?.copiar_comentarios ?? false} onChange={(e) => clonando && setClonando({ ...clonando, copiar_comentarios: e.target.checked })} />
+          Os comentários
+        </label>
+        <label style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6 }}>
+          <input type="checkbox" checked={clonando?.copiar_anexos ?? false} onChange={(e) => clonando && setClonando({ ...clonando, copiar_anexos: e.target.checked })} />
+          Os anexos{item.anexos.length ? ` (${item.anexos.length})` : ""} e as imagens da descrição
+        </label>
       </Dialogo>
 
       <Dialogo
