@@ -46,6 +46,7 @@ Design System Jusbrasil: fonte Inter; títulos H1 22px Semibold #007A5F, H2 18px
 - Decidido em 16/11: depois da instalação, só um ADM da plataforma pode dar ou tirar o papel de ADM da plataforma, com registro na auditoria; a plataforma nunca fica sem ADM.
 - Decidido em 16/11: a sessão de 15 dias renova a cada uso e só cai depois de 15 dias seguidos sem uso.
 - Decidido em 16/11: o ADM da plataforma pode reativar um usuário desativado; a pessoa volta com os mesmos papéis e acessos, com registro na auditoria.
+- Decidido em 16/11: ao remover um domínio autorizado, quem tem e-mail daquele domínio sai do sistema na hora e não consegue mais entrar; cadastros e papéis ficam guardados caso o domínio volte, e a remoção vai para a auditoria com o número de sessões encerradas.
 - Decidido em 16/11: quem entra sem acesso a nenhum espaço vê o aviso "Você ainda não tem acesso a nenhum espaço. Peça acesso ao ADM do espaço em que vai trabalhar.", com o botão Criar espaço pessoal (a partir da Etapa 2).
 - Dependência externa: credenciais OAuth criadas no Google Cloud da empresa, com endereços de retorno por ambiente. Até lá, o desenvolvimento usa um login de teste.
 
