@@ -1,44 +1,11 @@
 """Itens: campos obrigatórios, hierarquia, histórico, exclusão, clonagem e campos personalizados."""
 
 import pytest
-from conftest import entrar, eventos
-from test_espacos import criar_projeto
+from conftest import criar_item, dados_item, entrar, eventos
 
 
 def _id(cliente) -> str:
     return cliente.get("/api/eu").json()["id"]
-
-
-@pytest.fixture
-def cenario(novo_cliente, cliente_adm):
-    """Espaço LOP com um time, um Membro e um Leitor. Devolve um dicionário com tudo que os testes usam."""
-    espaco = criar_projeto(cliente_adm)
-    time = cliente_adm.post("/api/admin/times", json={"nome": "Legal Ops"}).json()
-    membro, leitor = novo_cliente(), novo_cliente()
-    entrar(membro, "membro@jusbrasil.com.br", "Marta Membro")
-    entrar(leitor, "leitor@jusbrasil.com.br", "Leo Leitor")
-    cliente_adm.post("/api/espacos/LOP/membros", json={"usuario_id": _id(membro), "papel": "membro"})
-    cliente_adm.post("/api/espacos/LOP/membros", json={"usuario_id": _id(leitor), "papel": "leitor"})
-    tipos = {t["nome"]: t["id"] for t in espaco["tipos"]}
-    status = {s["nome"]: s["id"] for s in espaco["status"]}
-    return {"adm": cliente_adm, "membro": membro, "leitor": leitor, "tipos": tipos, "status": status,
-            "time": time["id"], "membro_id": _id(membro), "adm_id": _id(cliente_adm), "leitor_id": _id(leitor)}
-
-
-def dados_item(c, **extra):
-    base = {
-        "tipo_id": c["tipos"]["Tarefa"], "resumo": "Revisar fluxo de prazos", "status_id": c["status"]["A fazer"],
-        "prioridade": "alta", "responsavel_id": c["membro_id"], "time_id": c["time"],
-        "data_inicio": "2026-11-16", "data_entrega": "2026-11-30",
-    }
-    base.update(extra)
-    return base
-
-
-def criar_item(cliente, c, sigla="LOP", **extra):
-    r = cliente.post(f"/api/espacos/{sigla}/itens", json={"dados": dados_item(c, **extra)})
-    assert r.status_code == 201, r.text
-    return r.json()
 
 
 def test_cria_item_com_chave_sequencial_e_relator_automatico(cenario):

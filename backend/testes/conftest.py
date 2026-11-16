@@ -163,3 +163,45 @@ def eventos(db, tipo: str | None = None) -> list:
         consulta = consulta.where(EventoAuditoria.tipo == tipo)
     db.expire_all()
     return list(db.scalars(consulta).unique())
+
+
+def _id(cliente) -> str:
+    return cliente.get("/api/eu").json()["id"]
+
+
+def criar_projeto(cliente, sigla="LOP", nome="Legal Ops", modelo="kanban"):
+    resposta = cliente.post("/api/espacos", json={"tipo": "projeto", "nome": nome, "sigla": sigla, "modelo": modelo})
+    assert resposta.status_code == 201, resposta.text
+    return resposta.json()
+
+
+@pytest.fixture
+def cenario(novo_cliente, cliente_adm):
+    """Espaço LOP com um time, um Membro e um Leitor. Devolve um dicionário com tudo que os testes usam."""
+    espaco = criar_projeto(cliente_adm)
+    time = cliente_adm.post("/api/admin/times", json={"nome": "Legal Ops"}).json()
+    membro, leitor = novo_cliente(), novo_cliente()
+    entrar(membro, "membro@jusbrasil.com.br", "Marta Membro")
+    entrar(leitor, "leitor@jusbrasil.com.br", "Leo Leitor")
+    cliente_adm.post("/api/espacos/LOP/membros", json={"usuario_id": _id(membro), "papel": "membro"})
+    cliente_adm.post("/api/espacos/LOP/membros", json={"usuario_id": _id(leitor), "papel": "leitor"})
+    tipos = {t["nome"]: t["id"] for t in espaco["tipos"]}
+    status = {s["nome"]: s["id"] for s in espaco["status"]}
+    return {"adm": cliente_adm, "membro": membro, "leitor": leitor, "tipos": tipos, "status": status,
+            "time": time["id"], "membro_id": _id(membro), "adm_id": _id(cliente_adm), "leitor_id": _id(leitor)}
+
+
+def dados_item(c, **extra):
+    base = {
+        "tipo_id": c["tipos"]["Tarefa"], "resumo": "Revisar fluxo de prazos", "status_id": c["status"]["A fazer"],
+        "prioridade": "alta", "responsavel_id": c["membro_id"], "time_id": c["time"],
+        "data_inicio": "2026-11-16", "data_entrega": "2026-11-30",
+    }
+    base.update(extra)
+    return base
+
+
+def criar_item(cliente, c, sigla="LOP", **extra):
+    r = cliente.post(f"/api/espacos/{sigla}/itens", json={"dados": dados_item(c, **extra)})
+    assert r.status_code == 201, r.text
+    return r.json()

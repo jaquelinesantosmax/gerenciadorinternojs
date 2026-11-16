@@ -3,9 +3,7 @@
 import io
 
 import pytest
-from conftest import entrar, eventos
-from test_espacos import criar_projeto
-from test_itens import cenario, criar_item, dados_item  # noqa: F401  (fixture)
+from conftest import criar_item, criar_projeto, entrar, eventos
 
 from gerenciador import anexos as anexos_svc
 from gerenciador.erros import ErroDeRegra
@@ -288,7 +286,3 @@ def test_busca_de_itens_para_vincular(cenario):
     criar_item(c["adm"], c, resumo="Padronizar petição")
     assert [i["chave"] for i in c["membro"].get("/api/itens/busca", params={"q": "petição"}).json()] == ["LOP-1"]
     assert [i["chave"] for i in c["membro"].get("/api/itens/busca", params={"q": "lop-1"}).json()] == ["LOP-1"]
-
-
-def test_dados_item_usado():
-    assert callable(dados_item)

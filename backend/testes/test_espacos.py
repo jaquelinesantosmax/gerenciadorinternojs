@@ -1,16 +1,10 @@
 """Espaços, membros, painéis, tipos próprios, origens e Times provisórios (Etapa 2)."""
 
-from conftest import entrar, eventos
+from conftest import criar_projeto, entrar, eventos
 
 
 def _id(cliente) -> str:
     return cliente.get("/api/eu").json()["id"]
-
-
-def criar_projeto(cliente, sigla="LOP", nome="Legal Ops", modelo="kanban"):
-    resposta = cliente.post("/api/espacos", json={"tipo": "projeto", "nome": nome, "sigla": sigla, "modelo": modelo})
-    assert resposta.status_code == 201, resposta.text
-    return resposta.json()
 
 
 def test_quem_pode_criar_espaco_de_equipe_vira_adm(cliente_adm, db):

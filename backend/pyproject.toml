@@ -24,3 +24,4 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.File"]
 [tool.ruff.lint.per-file-ignores]
 # As tabelas das etapas seguintes são importadas no fim de modelos.py, de propósito.
 "gerenciador/modelos.py" = ["E402"]
+"testes/*" = ["E501"]
